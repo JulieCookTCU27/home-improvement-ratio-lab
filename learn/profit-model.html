@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Strategic Profit Model</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="lab.css">
+<style>
+.tree{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:stretch}
+@media (max-width:820px){.tree{grid-template-columns:1fr}}
+.node{border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.node.result{background:var(--accent-soft);border-color:transparent}
+.node h3{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.node h3 .num{color:var(--accent);font-size:18px}
+.op-row{display:flex;justify-content:center;font:800 22px var(--display);color:var(--muted)}
+.mini{width:100%;font-size:13px}
+.mini td{padding:4px 0;border-bottom:1px dashed var(--line)}
+.mini td:last-child{text-align:right;font-family:var(--mono)}
+.mini tr:last-child td{border-bottom:0;font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Supply Chain Ratio Lab · Profit Model</div>
+      <h1>Strategic Profit Model</h1>
+      <p class="lede">Return on assets is the product of two things: how much profit each dollar of sales keeps (margin) and how many dollars of sales each dollar of assets produces (turnover). Supply chain decisions move both.</p>
+    </div>
+    <div class="controls"><span class="example-flag" id="dataflag"></span></div>
+  </header>
+
+  <nav class="tabs" aria-label="Pages">
+    <a href="index.html">Start Here</a>
+    <a href="ratios.html">Ratio Walkthrough</a>
+    <a href="profit-model.html">Profit Model</a>
+    <a href="what-if.html">What If</a>
+    <a href="practice.html">Practice</a>
+  </nav>
+
+  <section class="panel" aria-labelledby="idea-h">
+    <div class="sec-head"><div><div class="eyebrow">The Big Idea</div><h2 id="idea-h">Margin × Turnover = Return</h2></div></div>
+    <p style="max-width:70ch">Picture two lemonade stands, each worth $100. Stand A sells $500 of lemonade a year and keeps 2 cents of every dollar: $10 of profit. Stand B sells only $100 a year but keeps 10 cents of every dollar: also $10. Both earn a 10% return on the $100 stand, one through speed and one through margin. Discount retailers win like Stand A; specialty retailers win like Stand B.</p>
+    <div class="scroll"><table style="max-width:640px">
+      <thead><tr><th>Stand</th><th>Margin</th><th>×</th><th>Turnover</th><th>=</th><th>Return</th></tr></thead>
+      <tbody>
+        <tr><td>A: Fast, Thin Margin</td><td class="num">2%</td><td></td><td class="num">5.0×</td><td></td><td class="num">10%</td></tr>
+        <tr><td>B: Slow, Rich Margin</td><td class="num">10%</td><td></td><td class="num">1.0×</td><td></td><td class="num">10%</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="tree-h">
+    <div class="sec-head"><div><div class="eyebrow">Worked Example</div><h2 id="tree-h">The Model With the Current Figures</h2></div>
+    <p class="muted">US$ millions. Change the figures on <a href="index.html#in-h">Start Here</a> to run it on a real company.</p></div>
+    <div class="tree" id="tree"></div>
+    <p class="callout" id="tree-read"></p>
+  </section>
+
+  <section class="panel" aria-labelledby="ropa-h">
+    <div class="sec-head"><div><div class="eyebrow">Narrowing the Base</div><h2 id="ropa-h">Same Profit, Five Different Asset Bases</h2></div>
+    <p class="muted">The profit stays the same. Only the assets it is measured against change, and each base answers a different question.</p></div>
+    <div class="scroll"><table class="reqs" id="bases"></table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="lev-h">
+    <div class="sec-head"><div><div class="eyebrow">Where the Supply Chain Fits</div><h2 id="lev-h">Which Decisions Move Which Side</h2></div></div>
+    <div class="scroll"><table class="reqs">
+      <thead><tr><th>Supply Chain Decision</th><th>Moves Margin By</th><th>Moves Turnover By</th></tr></thead>
+      <tbody>
+        <tr><td>Better Forecasting and Replenishment</td><td>Fewer markdowns and stockouts, so gross margin rises</td><td>Less inventory needed, so assets shrink</td></tr>
+        <tr><td>Supplier Negotiation and Sourcing</td><td>Lower purchase cost, so COGS falls</td><td>Longer payment terms free cash, though they do not change total assets directly</td></tr>
+        <tr><td>Distribution Network Design</td><td>Lower freight and handling cost in COGS or SG&amp;A</td><td>Fewer or busier facilities, so PP&amp;E works harder</td></tr>
+        <tr><td>Store Labor and Automation</td><td>Lower SG&amp;A per dollar of sales</td><td>Automation adds PP&amp;E, so turnover can dip until volume grows</td></tr>
+        <tr><td>Own Versus Lease</td><td>Rent is in SG&amp;A, depreciation may be separate</td><td>Leased buildings stay out of PP&amp;E, which raises PP&amp;E turnover and ROPA</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <footer>The Strategic Profit Model shown here uses supply chain operating profit (sales − COGS − SG&amp;A) so the result reflects what operations control. See Resources on <a href="index.html#src-h">Start Here</a>.</footer>
+</div>
+<script src="lab.js"></script>
+<script>
+const d = loadData(), r = all(d), b = blocks(d);
+const tree = `
+<div class="node"><h3>SC Operating Margin <span class="num">${fmt(r.scom,'pct')}</span></h3>
+  <table class="mini"><tr><td>Sales</td><td>${M(d.revenue)}</td></tr><tr><td>− COGS</td><td>${M(d.cogs)}</td></tr><tr><td>− SG&amp;A</td><td>${M(d.sga)}</td></tr><tr><td>= SC Operating Profit</td><td>${M(b.scop)}</td></tr><tr><td>÷ Sales</td><td>${fmt(r.scom,'pct')}</td></tr></table>
+  <p class="muted" style="font-size:13px">Profit kept from each dollar of sales.</p></div>
+<div class="node"><h3>Asset Turnover <span class="num">${fmt(r.ato,'x')}</span></h3>
+  <table class="mini"><tr><td>Sales</td><td>${M(d.revenue)}</td></tr><tr><td>÷ Total Assets</td><td>${M(d.total_assets)}</td></tr><tr><td>= Turnover</td><td>${fmt(r.ato,'x')}</td></tr></table>
+  <p class="muted" style="font-size:13px">Sales produced by each dollar of assets.</p></div>
+<div class="node result"><h3>ROA Using SCOM <span class="num">${fmt(r.roaS,'pct')}</span></h3>
+  <table class="mini"><tr><td>Margin</td><td>${fmt(r.scom,'pct')}</td></tr><tr><td>× Turnover</td><td>${fmt(r.ato,'x')}</td></tr><tr><td>= Return</td><td>${fmt(r.scom*r.ato,'pct')}</td></tr></table>
+  <p class="muted" style="font-size:13px">Check: ${M(b.scop)} ÷ ${M(d.total_assets)} = ${fmt(r.roaS,'pct')}.</p></div>`;
+document.getElementById('tree').innerHTML = tree;
+const pts = v => (v*100).toFixed(1);
+document.getElementById('tree-read').textContent = `Each dollar of sales keeps ${pts(r.scom)} cents of supply chain profit, and each dollar of assets produces $${r.ato.toFixed(2)} of sales a year. Multiply the two and each dollar of assets earns ${pts(r.roaS)} cents. Raising margin by one point would add ${pts(0.01*r.ato)} points of return; raising turnover by 0.1× would add ${pts(0.1*r.scom)} points.`;
+const rows = [
+  ['Total Assets', 'Everything the company owns', d.total_assets, r.roaS, 'ROA Using SCOM: the overall operating return.'],
+  ['Total Assets − Goodwill & Intangibles', 'Removes acquisition premiums', d.total_assets - d.goodwill_intangibles, r.roaSxg, 'Shows how much past acquisitions dilute the return.'],
+  ['Total Assets − Cash', 'Removes idle cash', d.total_assets - d.cash, r.roicS, 'ROIC Using SCOM: return on capital at work in operations.'],
+  ['PP&E + Inventory', 'Only what the supply chain controls', d.ppe_net + d.inventory, r.ropa, 'ROPA: the best single test of supply chain efficiency.'],
+  ['PP&E + Lease Assets + Inventory', 'Adds leased buildings', d.ppe_net + d.rou_assets + d.inventory, r.ropaL, 'ROPA Including Leased Assets: fair across own-versus-lease choices.']];
+document.getElementById('bases').innerHTML = '<thead><tr><th>Asset Base</th><th>What Changes</th><th style="text-align:right">Base</th><th style="text-align:right">Return</th><th>What It Answers</th></tr></thead><tbody>' +
+  rows.map(([a, w, base, v, q]) => `<tr><td>${esc(a)}</td><td>${esc(w)}</td><td class="num" style="text-align:right">${M(base)}</td><td class="num" style="text-align:right">${M(b.scop)} ÷ ${M(base)} = <b>${fmt(v,'pct')}</b></td><td>${esc(q)}</td></tr>`).join('') + '</tbody>';
+</script>
+</body>
+</html>

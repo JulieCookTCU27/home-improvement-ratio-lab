@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ratio Walkthrough</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Supply Chain Ratio Lab · Ratio Walkthrough</div>
+      <h1>Ratio Walkthrough</h1>
+      <p class="lede">Each card starts with what the ratio means in plain terms, then the formal formula, then every step of the arithmetic using the current figures, and ends with why it matters and the mistake people usually make.</p>
+    </div>
+    <div class="controls"><span class="example-flag" id="dataflag"></span></div>
+  </header>
+
+  <nav class="tabs" aria-label="Pages">
+    <a href="index.html">Start Here</a>
+    <a href="ratios.html">Ratio Walkthrough</a>
+    <a href="profit-model.html">Profit Model</a>
+    <a href="what-if.html">What If</a>
+    <a href="practice.html">Practice</a>
+  </nav>
+
+  <section class="panel" aria-labelledby="toc-h">
+    <div class="sec-head"><div><div class="eyebrow">Jump to a Ratio</div><h2 id="toc-h">Twenty-Five Ratios in Five Families</h2></div>
+    <p class="muted">Change the figures on <a href="index.html#in-h">Start Here</a> and every step below recalculates.</p></div>
+    <div id="toc" style="display:flex;flex-direction:column;gap:10px"></div>
+  </section>
+
+  <div id="cards" class="view"></div>
+
+  <footer>Ratio definitions follow the supply chain ratio conventions listed under Resources on <a href="index.html#src-h">Start Here</a>. Example figures are made up for learning.</footer>
+</div>
+<script src="lab.js"></script>
+<script>
+const d = loadData();
+let toc = '', cards = '', group = null;
+RATIOS.forEach(r => {
+  if (!r.k) {
+    if (group) { toc += '</div></div>'; cards += '</div>'; }
+    group = r.group;
+    toc += `<div><div class="group-title">${esc(r.group)}</div><div class="toc" style="margin-top:6px">`;
+    cards += `<div class="view" style="gap:14px"><section class="panel" style="gap:6px"><div class="eyebrow">Ratio Family</div><h2>${esc(r.group)}</h2><p class="muted">${esc(r.intro)}</p></section>`;
+    return;
+  }
+  toc += `<a href="#${r.k}">${esc(r.name)}</a>`;
+  const steps = r.steps(d);
+  const val = r.value(d);
+  cards += `<article class="rcard" id="${r.k}">
+    <header><div style="display:flex;flex-direction:column;gap:4px"><h3>${esc(r.name)}</h3><span class="dir">${esc(r.better)}</span></div><span class="answer">${fmt(val, r.kind)}</span></header>
+    <div class="col">
+      <div><div class="lbl">In Plain Terms</div><p>${esc(r.plain)}</p></div>
+      <div><div class="lbl">Picture It</div><p>${esc(r.analogy)}</p></div>
+      <div><div class="lbl">Formula</div><div class="formula">${esc(r.formula)}</div></div>
+      <div><div class="lbl">Why It Matters</div><p>${esc(r.why)}</p></div>
+    </div>
+    <div class="col">
+      <div class="lbl">Step by Step</div>
+      <ol class="steps">${steps.map(([t, calc, v], i) => `<li class="${i === steps.length - 1 ? 'final' : ''}"><span>${esc(t)}${calc ? `<br><span class="num muted" style="font-size:12px;font-weight:400">${esc(calc)}</span>` : ''}</span><span class="v">${esc(v)}</span></li>`).join('')}</ol>
+      <p class="watch">${r.watch}</p>
+    </div>
+  </article>`;
+});
+toc += '</div></div>'; cards += '</div>';
+document.getElementById('toc').innerHTML = toc;
+document.getElementById('cards').innerHTML = cards;
+if (location.hash) { const t = document.getElementById(location.hash.slice(1)); if (t) t.scrollIntoView(); }
+</script>
+</body>
+</html>

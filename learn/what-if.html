@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Supply Chain What If</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Supply Chain Ratio Lab · What If</div>
+      <h1>Supply Chain What If</h1>
+      <p class="lede">Move one supply chain lever at a time and see what happens to cash, margin and return. Every change is explained with the arithmetic behind it.</p>
+    </div>
+    <div class="controls"><span class="example-flag" id="dataflag"></span></div>
+  </header>
+
+  <nav class="tabs" aria-label="Pages">
+    <a href="index.html">Start Here</a>
+    <a href="ratios.html">Ratio Walkthrough</a>
+    <a href="profit-model.html">Profit Model</a>
+    <a href="what-if.html">What If</a>
+    <a href="practice.html">Practice</a>
+  </nav>
+
+  <section class="panel" aria-labelledby="wi-h">
+    <div class="sec-head"><div><div class="eyebrow">Sensitivity</div><h2 id="wi-h">Pull a Lever</h2></div>
+    <p class="muted">Each slider changes one input and holds everything else at the current figure.</p></div>
+    <div class="bench">
+      <div class="sliders">
+        <div class="sl"><label for="s-inv">Inventory Days</label><output id="o-inv"></output><input type="range" id="s-inv" min="-20" max="20" step="1" value="0"><span class="hint">Hold goods fewer or more days</span></div>
+        <div class="sl"><label for="s-pay">Payables Days</label><output id="o-pay"></output><input type="range" id="s-pay" min="-20" max="20" step="1" value="0"><span class="hint">Pay suppliers sooner or later</span></div>
+        <div class="sl"><label for="s-cogs">COGS, % of Sales</label><output id="o-cogs"></output><input type="range" id="s-cogs" min="-3" max="3" step="0.1" value="0"><span class="hint">Buy or move goods for less or more</span></div>
+        <div class="sl"><label for="s-sga">SG&amp;A, % of Sales</label><output id="o-sga"></output><input type="range" id="s-sga" min="-3" max="3" step="0.1" value="0"><span class="hint">Run stores and overhead leaner or heavier</span></div>
+        <div class="sl"><label for="s-ppe">PP&amp;E</label><output id="o-ppe"></output><input type="range" id="s-ppe" min="-20" max="20" step="1" value="0"><span class="hint">Close or build stores and distribution centers</span></div>
+        <div class="sl"><label for="s-rev">Sales</label><output id="o-rev"></output><input type="range" id="s-rev" min="-10" max="10" step="0.5" value="0"><span class="hint">Costs scale with sales at the percentages above</span></div>
+        <div class="toolbar"><button type="button" class="btn" id="reset">Reset Levers</button></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+        <div class="outs" id="outs"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="ex-h">
+    <div class="sec-head"><div><div class="eyebrow">Show the Work</div><h2 id="ex-h">What Each Lever Did</h2></div></div>
+    <ol class="steps" id="explain"></ol>
+  </section>
+
+  <section class="panel" aria-labelledby="rule-h">
+    <div class="sec-head"><div><div class="eyebrow">Rules of Thumb</div><h2 id="rule-h">Quick Math to Remember</h2></div></div>
+    <div class="scroll"><table class="reqs" id="rules"></table></div>
+  </section>
+
+  <footer>Simplified model: lower inventory or higher payables releases cash, which is shown separately and not reinvested. Taxes and interest are not modeled.</footer>
+</div>
+<script src="lab.js"></script>
+<script>
+const d = loadData(), base = all(d), bb = blocks(d);
+const L = {inv:0,pay:0,cogs:0,sga:0,ppe:0,rev:0};
+const day = d.cogs / 365;
+function scenario() {
+  const rev = d.revenue * (1 + L.rev/100);
+  const cogs = rev * (d.cogs/d.revenue + L.cogs/100);
+  const sga = rev * (d.sga/d.revenue + L.sga/100);
+  const inventory = (base.invDays + L.inv) * cogs / 365;
+  const ap = (base.payDays + L.pay) * cogs / 365;
+  const ppe = d.ppe_net * (1 + L.ppe/100);
+  const receivables = d.receivables * rev / d.revenue;
+  const ta = d.total_assets + (inventory - d.inventory) + (ppe - d.ppe_net) + (receivables - d.receivables);
+  const s = Object.assign({}, d, {revenue:rev, cogs, sga, inventory, accounts_payable:ap, ppe_net:ppe, receivables, total_assets:ta});
+  return {s, r: all(s), cash: (d.inventory - inventory) + (ap - d.accounts_payable) + (d.receivables - receivables)};
+}
+function chg(a, b, kind, higherGood) {
+  const dv = b - a; if (Math.abs(dv) < 1e-9) return '<span class="chg flat">No change</span>';
+  const good = higherGood ? dv > 0 : dv < 0;
+  const t = kind === 'pct' ? (dv > 0 ? '+' : '−') + Math.abs(dv*100).toFixed(1) + ' pts' : kind === 'days' ? (dv > 0 ? '+' : '−') + Math.abs(dv).toFixed(1) + ' days' : (dv > 0 ? '+' : '−') + Math.abs(dv).toFixed(2) + '×';
+  return `<span class="chg ${good ? 'up' : 'down'}">${t}</span>`;
+}
+function render() {
+  const sign = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v);
+  document.getElementById('o-inv').textContent = sign(L.inv) + ' d';
+  document.getElementById('o-pay').textContent = sign(L.pay) + ' d';
+  document.getElementById('o-cogs').textContent = sign(L.cogs.toFixed(1)) + ' pts';
+  document.getElementById('o-sga').textContent = sign(L.sga.toFixed(1)) + ' pts';
+  document.getElementById('o-ppe').textContent = sign(L.ppe) + '%';
+  document.getElementById('o-rev').textContent = sign(L.rev) + '%';
+  const {s, r, cash} = scenario();
+  const card = (k, label, kind, hg, cls) => `<div class="out ${cls||''}"><span class="k">${label}</span><span class="vv">${fmt(r[k], kind)}</span><span class="bb">now ${fmt(base[k], kind)}</span>${chg(base[k], r[k], kind, hg)}</div>`;
+  document.getElementById('outs').innerHTML =
+    card('ropa','ROPA','pct',true,'big') + card('roaS','ROA Using SCOM','pct',true) + card('scom','SC Operating Margin','pct',true) +
+    card('ccc','Cash Conversion Cycle','days',false) + card('gproi','GPROI','x',true) +
+    `<div class="out big"><span class="k">Cash Released</span><span class="vv">${fmt(cash,'m')}</span><span class="bb">from changes in inventory, payables and receivables</span></div>`;
+  const ex = [];
+  if (L.inv) ex.push([`Inventory days ${L.inv < 0 ? 'fall' : 'rise'} by ${Math.abs(L.inv)}. One day of inventory costs COGS ÷ 365 = ${fmt(s.cogs/365,'m',1)}, so inventory moves by ${Math.abs(L.inv)} × ${fmt(s.cogs/365,'m',1)}. Less inventory also shrinks the ROPA base (PP&E + inventory).`, `${M(d.inventory)} → ${M(s.inventory)}`]);
+  if (L.pay) ex.push([`Payables days ${L.pay > 0 ? 'rise' : 'fall'} by ${Math.abs(L.pay)}. Each day the company waits to pay is worth one day of purchases, ${fmt(s.cogs/365,'m',1)}. This changes cash and the cash cycle, but not profit or ROPA.`, `${M(d.accounts_payable)} → ${M(s.accounts_payable)}`]);
+  if (L.cogs) ex.push([`COGS ${L.cogs < 0 ? 'falls' : 'rises'} by ${Math.abs(L.cogs).toFixed(1)} points of sales. Each point equals 1% of sales, ${fmt(s.revenue*0.01,'m')}, and goes straight to SC operating profit.`, `${M(d.cogs)} → ${M(s.cogs)}`]);
+  if (L.sga) ex.push([`SG&A ${L.sga < 0 ? 'falls' : 'rises'} by ${Math.abs(L.sga).toFixed(1)} points of sales. Like COGS, each point is ${fmt(s.revenue*0.01,'m')} of profit.`, `${M(d.sga)} → ${M(s.sga)}`]);
+  if (L.ppe) ex.push([`PP&E ${L.ppe < 0 ? 'falls' : 'rises'} ${Math.abs(L.ppe)}%. Profit is unchanged, so only the asset base moves: fewer assets doing the same work raises turnover and return.`, `${M(d.ppe_net)} → ${M(s.ppe_net)}`]);
+  if (L.rev) ex.push([`Sales ${L.rev > 0 ? 'rise' : 'fall'} ${Math.abs(L.rev)}%. Costs scale at the same percentages, so profit scales too, while PP&E stays fixed. That is why growth lifts turnover and ROPA.`, `${M(d.revenue)} → ${M(s.revenue)}`]);
+  if (!ex.length) ex.push(['Move a slider above to see the arithmetic for that lever.', '']);
+  ex.push([`Result: SC operating profit ${M(bb.scop)} → ${M(s.revenue - s.cogs - s.sga)}; physical assets ${M(d.ppe_net + d.inventory)} → ${M(s.ppe_net + s.inventory)}.`, `ROPA ${fmt(base.ropa,'pct')} → ${fmt(r.ropa,'pct')}`]);
+  document.getElementById('explain').innerHTML = ex.map(([t, v], i) => `<li class="${i === ex.length - 1 ? 'final' : ''}"><span>${esc(t)}</span><span class="v">${esc(v)}</span></li>`).join('');
+}
+['inv','pay','cogs','sga','ppe','rev'].forEach(k => document.getElementById('s-'+k).addEventListener('input', e => { L[k] = Number(e.target.value); render(); }));
+document.getElementById('reset').addEventListener('click', () => { Object.keys(L).forEach(k => { L[k] = 0; document.getElementById('s-'+k).value = 0; }); render(); });
+document.getElementById('rules').innerHTML = '<thead><tr><th>If This Changes</th><th>The Quick Math</th><th style="text-align:right">For the Current Figures</th></tr></thead><tbody>' + [
+  ['One Day of Inventory', 'COGS ÷ 365', fmt(day,'m',1)],
+  ['One Day of Payables', 'COGS ÷ 365', fmt(day,'m',1)],
+  ['One Day of Receivables', 'Sales ÷ 365', fmt(d.revenue/365,'m',1)],
+  ['One Point of Margin', 'Sales × 1%', fmt(d.revenue*0.01,'m')],
+  ['One Point of ROPA', '(PP&E + Inventory) × 1% more SC profit', fmt((d.ppe_net+d.inventory)*0.01,'m')],
+  ['One Point of SCOM on ROA', '1 point × asset turnover', ((base.ato)*1).toFixed(2) + ' pts of ROA']
+].map(([a,b,c]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td><td class="num" style="text-align:right">${esc(c)}</td></tr>`).join('') + '</tbody>';
+render();
+</script>
+</body>
+</html>

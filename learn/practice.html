@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ratio Practice Problems</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="lab.css">
+<style>
+.probs{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.facts table td{padding:5px 8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Supply Chain Ratio Lab · Practice</div>
+      <h1>Ratio Practice Problems</h1>
+      <p class="lede">Calculate each ratio for Practice Co. by hand or with a calculator, type your answer, and check it. Open the worked solution only after you try.</p>
+    </div>
+    <div class="controls"><span class="score" id="score"></span></div>
+  </header>
+
+  <nav class="tabs" aria-label="Pages">
+    <a href="index.html">Start Here</a>
+    <a href="ratios.html">Ratio Walkthrough</a>
+    <a href="profit-model.html">Profit Model</a>
+    <a href="what-if.html">What If</a>
+    <a href="practice.html">Practice</a>
+  </nav>
+
+  <section class="panel" aria-labelledby="pc-h">
+    <div class="sec-head"><div><div class="eyebrow">The Data</div><h2 id="pc-h">Practice Co. Financial Statements</h2></div>
+    <p class="muted">US$ millions; employees in thousands. A made-up company, separate from the figures on the other pages.</p></div>
+    <div class="facts" id="facts"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="pr-h">
+    <div class="sec-head"><div><div class="eyebrow">Your Turn</div><h2 id="pr-h">Twelve Problems</h2></div>
+    <p class="muted">Enter percentages as numbers (30 for 30%). Answers within about 1% of the correct value count as right.</p></div>
+    <div class="toolbar"><button type="button" class="btn" id="clear">Clear My Answers</button></div>
+    <div class="probs" id="probs"></div>
+  </section>
+
+  <footer>Practice Co. is a made-up company for learning the math. Worked solutions use the same steps as the <a href="ratios.html">Ratio Walkthrough</a>.</footer>
+</div>
+<script src="lab.js"></script>
+<script>
+const P = { name: 'Practice Co.', revenue: 20000, prior_revenue: 19000, cogs: 14000, sga: 4200, depreciation: 400, operating_income: 1400, net_income: 950,
+  cash: 600, receivables: 300, inventory: 3500, total_current_assets: 4800, ppe_net: 5000, rou_assets: 2500, goodwill_intangibles: 800,
+  total_assets: 13000, accounts_payable: 2100, total_current_liabilities: 4000, employees_thousands: 60 };
+const rows = [['Income Statement', ['revenue','prior_revenue','cogs','sga','operating_income','net_income']],
+  ['Balance Sheet', ['cash','receivables','inventory','total_current_assets','ppe_net','rou_assets','goodwill_intangibles','total_assets','accounts_payable','total_current_liabilities']],
+  ['Other', ['employees_thousands']]];
+const LABEL = Object.fromEntries(FIELDS.flatMap(([, r]) => r.map(([k, l]) => [k, l])));
+document.getElementById('facts').innerHTML = rows.map(([g, ks]) => `<div><h3>${esc(g)}</h3><table><tbody>${ks.map(k => `<tr><td>${esc(LABEL[k])}</td><td class="num">${k === 'employees_thousands' ? P[k] + 'K' : M(P[k])}</td></tr>`).join('')}</tbody></table></div>`).join('');
+
+const Q = [
+  ['invDays', 'How many days of inventory does Practice Co. hold?', 'days'],
+  ['recDays', 'What are its receivables days?', 'days'],
+  ['payDays', 'What are its payables days?', 'days'],
+  ['ccc', 'What is its cash conversion cycle?', 'days'],
+  ['gm', 'What is its gross margin?', '%'],
+  ['scom', 'What is its SC operating margin (SCOM)?', '%'],
+  ['ato', 'What is its asset turnover?', '×'],
+  ['roaS', 'What is its ROA using SCOM?', '%'],
+  ['ropa', 'What is its ROPA?', '%'],
+  ['ropaL', 'What is its ROPA including leased assets?', '%'],
+  ['gproi', 'What is its GPROI?', '×'],
+  ['cash5', 'If Practice Co. cut inventory by 5 days, how much cash would it release (US$ millions)?', '$M']
+];
+const ans = k => k === 'cash5' ? 5 * P.cogs / 365 : RATIO[k].value(P);
+const shown = (k, unit) => unit === '%' ? ans(k) * 100 : ans(k);
+const KEY2 = 'ratio-lab-practice-v1';
+let saved = {}; try { saved = JSON.parse(localStorage.getItem(KEY2) || '{}') || {}; } catch (e) {}
+function steps(k) {
+  if (k === 'cash5') return [['One day of inventory costs COGS ÷ 365.', `${M(P.cogs)} ÷ 365`, fmt(P.cogs/365,'m',1)], ['Multiply by 5 days.', `5 × ${fmt(P.cogs/365,'m',1)}`, fmt(5*P.cogs/365,'m',1)]];
+  return RATIO[k].steps(P);
+}
+document.getElementById('probs').innerHTML = Q.map(([k, q, unit], i) => `
+  <div class="prob" data-k="${k}" data-u="${unit}">
+    <span class="eyebrow">Problem ${i + 1}${RATIO[k] ? ' · ' + esc(RATIO[k].name) : ' · Cash Released'}</span>
+    <span class="q">${esc(q)}</span>
+    <div class="row"><input id="a-${k}" type="number" step="any" inputmode="decimal" aria-label="Answer to problem ${i + 1}" value="${saved[k] ?? ''}"><span class="muted">${esc(unit)}</span><button type="button" class="btn primary" data-check="${k}">Check</button></div>
+    <span class="res" id="r-${k}" role="status"></span>
+    <details><summary>Show the Worked Solution</summary>
+      ${RATIO[k] ? `<div class="formula" style="margin:8px 0">${esc(RATIO[k].formula)}</div>` : ''}
+      <ol class="steps">${steps(k).map(([t, c, v], j, a) => `<li class="${j === a.length - 1 ? 'final' : ''}"><span>${esc(t)}${c ? `<br><span class="num muted" style="font-size:12px;font-weight:400">${esc(c)}</span>` : ''}</span><span class="v">${esc(v)}</span></li>`).join('')}</ol>
+    </details>
+  </div>`).join('');
+const result = {};
+function check(k, unit, quiet) {
+  const el = document.getElementById('a-' + k), out = document.getElementById('r-' + k);
+  if (el.value === '') { if (!quiet) { out.textContent = 'Type an answer first.'; out.className = 'res'; } delete result[k]; return; }
+  const v = Number(el.value), a = shown(k, unit);
+  const right = Math.abs(v - a) <= Math.max(Math.abs(a) * 0.01, 0.05);
+  result[k] = right;
+  out.textContent = right ? 'Correct.' : 'Not yet. Check which numbers you divided, then try again or open the solution.';
+  out.className = 'res ' + (right ? 'ok' : 'no');
+  score();
+}
+function score() { const n = Object.values(result).filter(Boolean).length; document.getElementById('score').textContent = `${n} of ${Q.length} Correct`; }
+document.getElementById('probs').addEventListener('click', e => { const k = e.target.dataset && e.target.dataset.check; if (k) check(k, e.target.closest('.prob').dataset.u); });
+document.getElementById('probs').addEventListener('input', e => { if (!e.target.id.startsWith('a-')) return; saved[e.target.id.slice(2)] = e.target.value; try { localStorage.setItem(KEY2, JSON.stringify(saved)); } catch (err) {} });
+document.getElementById('clear').addEventListener('click', () => { saved = {}; try { localStorage.removeItem(KEY2); } catch (e) {} Q.forEach(([k]) => { document.getElementById('a-' + k).value = ''; const o = document.getElementById('r-' + k); o.textContent = ''; o.className = 'res'; delete result[k]; }); score(); });
+Q.forEach(([k, , u]) => check(k, u, true)); score();
+</script>
+</body>
+</html>

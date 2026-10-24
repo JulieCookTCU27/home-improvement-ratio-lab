@@ -21,6 +21,16 @@ Built by Team Aster for INSC 75663 Supply Chain and Operational Strategy, Execut
 - **Sensitivity:** sliders for inventory days, payables days, COGS, SG&A, PP&E and sales, plus a tornado chart of the levers that move ROPA most.
 - **Editable Inputs:** every 10-K figure can be edited in the browser; edits stay in that browser only.
 
+## Supply Chain Ratio Lab (Instructional Pages)
+
+The `learn/` folder holds a general-purpose version of the lab that is not tied to any company or assignment. It teaches each ratio with a made-up example company whose figures can be replaced with any company's 10-K data.
+
+- **Start Here** (`learn/index.html`): how the income statement and balance sheet fit together, checks before comparing companies, and editable inputs.
+- **Ratio Walkthrough** (`learn/ratios.html`): 25 ratios in five families, each with a plain-English meaning, an analogy, the formula, every calculation step, why it matters, and a common mistake.
+- **Profit Model** (`learn/profit-model.html`): margin × asset turnover = return, and the same profit measured against five asset bases.
+- **What If** (`learn/what-if.html`): sliders for six supply chain levers, with the arithmetic for each change.
+- **Practice** (`learn/practice.html`): twelve self-checking problems with worked solutions.
+
 ## How to View
 
 Open `index.html` in any browser, or visit the GitHub Pages site for this repository.

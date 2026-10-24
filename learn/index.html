@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Supply Chain Ratio Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Learn each supply chain financial ratio step by step: what it means, how to calculate it, and why it matters.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Supply Chain Ratio Lab · Start Here</div>
+      <h1>Supply Chain Ratio Lab</h1>
+      <p class="lede">Learn how to read a company's financial statements through a supply chain lens. Each ratio is explained in everyday terms first, then calculated step by step, then tied to what it says about the supply chain.</p>
+    </div>
+    <div class="controls"><span class="example-flag" id="dataflag"></span></div>
+  </header>
+
+  <nav class="tabs" aria-label="Pages">
+    <a href="index.html">Start Here</a>
+    <a href="ratios.html">Ratio Walkthrough</a>
+    <a href="profit-model.html">Profit Model</a>
+    <a href="what-if.html">What If</a>
+    <a href="practice.html">Practice</a>
+  </nav>
+
+  <section class="panel" aria-labelledby="path-h">
+    <div class="sec-head"><div><div class="eyebrow">How to Use This Lab</div><h2 id="path-h">Work Through It in Order</h2></div></div>
+    <div class="grid-links">
+      <a class="glink" href="#statements"><span class="n">01</span><h3>Read the Two Statements</h3><p>What the income statement and balance sheet each show, and where every number comes from.</p></a>
+      <a class="glink" href="ratios.html"><span class="n">02</span><h3>Ratio Walkthrough</h3><p>Every ratio, one at a time: the plain meaning, the formula, each step of the math, and why it matters.</p></a>
+      <a class="glink" href="profit-model.html"><span class="n">03</span><h3>Profit Model</h3><p>How margin and asset turnover multiply into return, and why supply chain decisions move both.</p></a>
+      <a class="glink" href="what-if.html"><span class="n">04</span><h3>What If</h3><p>Move one lever, such as inventory days, and watch cash and returns change, with the math shown.</p></a>
+      <a class="glink" href="practice.html"><span class="n">05</span><h3>Practice</h3><p>Self-checking problems on a second made-up company, with worked solutions you can open after you try.</p></a>
+    </div>
+  </section>
+
+  <section class="panel" id="statements" aria-labelledby="st-h">
+    <div class="sec-head"><div><div class="eyebrow">The Raw Material</div><h2 id="st-h">Two Statements, Two Kinds of Number</h2></div></div>
+    <div class="statement">
+      <div>
+        <h3>Income Statement: A Movie of the Year</h3>
+        <p>It adds up everything that happened over the whole fiscal year: sales coming in, product costs and operating costs going out, and the profit left over. Sales, COGS, SG&amp;A and net income are all income statement numbers.</p>
+      </div>
+      <div>
+        <h3>Balance Sheet: A Photo on One Day</h3>
+        <p>It shows what the company owns and owes on the last day of the fiscal year. Inventory, receivables, payables, PP&amp;E and total assets are all balance sheet numbers.</p>
+      </div>
+      <div>
+        <h3>Why Ratios Mix Them</h3>
+        <p>Most supply chain ratios divide a balance sheet number by an income statement number. That tells you how much the company had to hold (the photo) to produce a year of activity (the movie). Inventory days, for example, compares inventory on hand with a full year of cost of goods sold.</p>
+      </div>
+    </div>
+    <p class="callout">Annual figures for US public companies are in the 10-K filing, Item 8 (Financial Statements), on SEC EDGAR. A company's fourth-quarter earnings release, filed as an 8-K, usually reports the same consolidated statements sooner.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="rules-h">
+    <div class="sec-head"><div><div class="eyebrow">Before You Compare Companies</div><h2 id="rules-h">Five Checks That Prevent Wrong Answers</h2></div></div>
+    <div class="scroll"><table class="reqs">
+      <thead><tr><th>Check</th><th>Why It Matters</th></tr></thead>
+      <tbody>
+        <tr><td>Align the Fiscal Years</td><td>Many retailers end their year in late January or early February, while others end in December. Pair the years that cover the most overlapping months, and say when year-ends differ.</td></tr>
+        <tr><td>Watch for 53-Week Years</td><td>A 52-53 week calendar adds an extra week every five or six years. That year's sales look about 2% bigger, and the next year's growth looks weaker.</td></tr>
+        <tr><td>Use the Same Units</td><td>Filings report in thousands or millions. Convert everything to one unit before dividing.</td></tr>
+        <tr><td>Match Cost to Cost</td><td>Inventory and payables are recorded at cost, so divide them by COGS. Receivables are recorded at selling price, so divide them by sales.</td></tr>
+        <tr><td>Read the Notes</td><td>Acquisitions, leases and where depreciation is reported all change the ratios. The footnotes explain each one.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="in-h">
+    <div class="sec-head">
+      <div><div class="eyebrow">Inputs</div><h2 id="in-h">The Figures Behind Every Page</h2></div>
+      <p class="muted">US$ millions; employees in thousands. These start as a made-up company. Replace them with a real company's 10-K figures and every page recalculates. Edits stay in this browser only.</p>
+    </div>
+    <div class="toolbar">
+      <button type="button" class="btn" id="reset">Reset to Example Figures</button>
+      <span class="status" id="status" role="status"></span>
+    </div>
+    <div class="scroll"><table class="inputs reqs" id="inputs"></table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="src-h">
+    <div class="sec-head"><div><div class="eyebrow">Citations</div><h2 id="src-h">Resources</h2></div></div>
+    <ul class="src">
+      <li>Swink, M., Melnyk, S. A., &amp; Hartley, J. L. (2024). <i>Managing operations across the supply chain</i> (5th ed.). McGraw Hill.</li>
+      <li>Swink, M. (2026). <i>How SCM affects the bottom line: Strategic Profit Model</i> [Lecture slides]. Neeley School of Business, Texas Christian University.</li>
+      <li>U.S. Securities and Exchange Commission. <i>EDGAR full text search and company filings</i>. <a href="https://www.sec.gov/edgar/search/" target="_blank" rel="noopener">sec.gov/edgar</a></li>
+    </ul>
+  </section>
+
+  <footer>Example Retailer and Practice Co. are made-up companies with round numbers for learning the math. They do not represent any real business.</footer>
+</div>
+<script src="lab.js"></script>
+<script>
+let d = loadData();
+function renderInputs() {
+  let h = '<thead><tr><th>Line Item</th><th>What It Is</th><th style="text-align:right">Value</th></tr></thead><tbody>';
+  FIELDS.forEach(([grp, rows]) => {
+    h += `<tr class="group"><td colspan="3">${esc(grp)}</td></tr>`;
+    rows.forEach(([k, l, help]) => {
+      h += `<tr><td>${esc(l)}</td><td class="muted" style="font-weight:400">${esc(help)}</td><td><input id="in-${k}" data-k="${k}" type="number" step="any" inputmode="decimal" value="${d[k]}" class="${d[k] !== EXAMPLE[k] ? 'edited' : ''}" aria-label="${esc(l)}"></td></tr>`;
+    });
+  });
+  document.getElementById('inputs').innerHTML = h + '</tbody>';
+}
+function flag() { document.getElementById('dataflag').textContent = isEdited(d) ? 'Using Your Edited Figures' : 'Example Retailer: Made-Up Figures for Practice'; }
+document.getElementById('inputs').addEventListener('change', e => {
+  const k = e.target.dataset.k; if (!k) return;
+  const v = Number(e.target.value);
+  if (e.target.value === '' || !isFinite(v)) { e.target.value = d[k]; document.getElementById('status').textContent = 'Enter a number for ' + k.replace(/_/g, ' ') + '.'; return; }
+  d[k] = v; saveData(d); e.target.classList.toggle('edited', v !== EXAMPLE[k]);
+  document.getElementById('status').textContent = 'Saved. Every page now uses this figure.'; flag();
+});
+document.getElementById('reset').addEventListener('click', () => { d = resetData(); renderInputs(); flag(); document.getElementById('status').textContent = 'Back to the example figures.'; });
+renderInputs();
+</script>
+</body>
+</html>
