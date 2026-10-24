@@ -6,7 +6,7 @@ Built by Team Aster for INSC 75663 Supply Chain and Operational Strategy, Execut
 
 ## Views
 
-- **Summary** (`#summary`): assignment checklist with status, seven draft findings, and the Strategic Profit Model.
+- **Summary** (`#summary`): seven key findings and the Strategic Profit Model.
 - **Ratios** (`#ratios`): a chart for any ratio plus the full ratio sheet with Why It Matters and Impact labels.
 - **What If** (`#whatif`): If/Then analysis, sensitivity sliders and a tornado chart.
 - **Workbook View** (`#workbook`): all four companies in the assignment's spreadsheet layout.
