@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Home Improvement Ratio Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one analyst column — profit model up top, the ratio sheet, then the what-if bench (sliders + tornado), raw 10-K inputs last */
+:root{
+  --bg:#f5f4f8; --surface:#ffffff; --fg:#1d1a24; --muted:#686274; --line:#e2dfe8; --line-strong:#cbc6d4;
+  --accent:#4d1979; --accent-soft:#efe8f6;
+  --hd:#d9661c; --low:#1f5fa8; --fnd:#23826f; --tsco:#b03636;
+  --good:#1e7b4b; --bad:#b23a3a; --good-soft:#e3f2e9; --bad-soft:#f8e4e4;
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#131118; --surface:#1c1923; --fg:#ecebf1; --muted:#a39db0; --line:#2d2937; --line-strong:#423c4f;
+  --accent:#b994e6; --accent-soft:#2b2238;
+  --hd:#f08a3e; --low:#64a0e8; --fnd:#4cc0a6; --tsco:#e46f6f;
+  --good:#5cc98e; --bad:#ef7d7d; --good-soft:#163024; --bad-soft:#3a1e22; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#131118; --surface:#1c1923; --fg:#ecebf1; --muted:#a39db0; --line:#2d2937; --line-strong:#423c4f;
+  --accent:#b994e6; --accent-soft:#2b2238;
+  --hd:#f08a3e; --low:#64a0e8; --fnd:#4cc0a6; --tsco:#e46f6f;
+  --good:#5cc98e; --bad:#ef7d7d; --good-soft:#163024; --bad-soft:#3a1e22; color-scheme:dark;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:1160px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-0.01em}
+h1{font-size:clamp(26px,4vw,36px);font-weight:800}
+h2{font-size:20px;font-weight:700}
+h3{font-size:15px;font-weight:700}
+p{margin:0}
+.muted{color:var(--muted)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header.top{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:flex-end;justify-content:space-between}
+header.top .lede{max-width:64ch;color:var(--muted);margin-top:6px}
+.controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{font:600 13px var(--body);padding:7px 14px;border:0;background:transparent;color:var(--fg);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
+.seg button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+section.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:22px clamp(16px,2.5vw,26px);display:flex;flex-direction:column;gap:16px;min-width:0}
+.sec-head{display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;align-items:baseline}
+.sec-head p{max-width:70ch}
+.scroll{overflow-x:auto;min-width:0}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{font:600 12px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--line-strong);vertical-align:bottom}
+tr.group td{font:700 12px var(--display);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:16px;border-bottom:1px solid var(--line-strong)}
+td.rname{white-space:normal;min-width:280px;max-width:380px}
+td .why{display:block;font-size:12px;line-height:1.4;color:var(--fg);white-space:normal;margin-top:3px;max-width:44ch}
+td .why b{color:var(--accent);font-weight:700}
+.ift td{white-space:normal;vertical-align:top;text-align:left}
+.ift th{text-align:left}
+.ift td.num{white-space:nowrap}
+.ift tr.peer td{border-bottom:1px solid var(--line-strong)}
+.ift .tag{display:inline-block;font:600 11px var(--body);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:2px}
+.ift .arrow{font-family:var(--mono);font-variant-numeric:tabular-nums}
+td .def{display:block;font-size:12px;color:var(--muted);white-space:normal;max-width:34ch}
+td.lead{font-weight:700}
+td.lead .v{box-shadow:inset 0 -3px 0 var(--accent-soft)}
+.delta{display:block;font-size:11px}
+.up{color:var(--good)} .down{color:var(--bad)} .flat{color:var(--muted)}
+/* profit model */
+.spm{display:grid;grid-template-columns:minmax(150px,1.1fr) repeat(4,minmax(120px,1fr));gap:0;min-width:640px}
+.spm > div{padding:10px 12px;border-bottom:1px solid var(--line)}
+.spm .h{font:600 12px var(--body);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line-strong)}
+.spm .lbl{font-weight:600}
+.spm .lbl small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.spm .op{font:800 18px var(--display);color:var(--muted);margin-right:6px}
+.cellbar{display:flex;flex-direction:column;gap:5px}
+.cellbar .v{font:600 15px var(--mono);font-variant-numeric:tabular-nums}
+.bar{height:6px;border-radius:3px;background:var(--line)}
+.bar i{display:block;height:100%;border-radius:3px}
+.spm .result{background:var(--accent-soft)}
+/* sensitivity */
+.bench{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:24px}
+@media (max-width:860px){.bench{grid-template-columns:1fr}}
+.sliders{display:flex;flex-direction:column;gap:14px}
+.sl{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center}
+.sl label{font-weight:600;font-size:14px}
+.sl output{font:600 13px var(--mono);min-width:7ch;text-align:right}
+.sl input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--accent)}
+.sl .hint{grid-column:1/-1;font-size:12px;color:var(--muted)}
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+.btn{font:600 13px var(--body);padding:7px 12px;border-radius:7px;border:1px solid var(--line-strong);background:var(--surface);color:var(--fg);cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+select{font:600 14px var(--body);padding:7px 10px;border-radius:7px;border:1px solid var(--line-strong);background:var(--surface);color:var(--fg)}
+.outs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.out{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.out .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.out .vv{font:600 20px var(--mono);font-variant-numeric:tabular-nums}
+.out .bb{font:400 12px var(--mono);color:var(--muted)}
+.out .chg{font:600 12px var(--mono)}
+.out.big{grid-column:1/-1;background:var(--accent-soft);border-color:transparent}
+.callout{font-size:14px;border-left:3px solid var(--accent);padding:4px 0 4px 12px}
+svg text{font-family:var(--body)}
+/* inputs */
+details{border-top:1px solid var(--line);padding-top:10px}
+summary{cursor:pointer;font:700 15px var(--display)}
+.inputs input{width:100%;min-width:84px;font:13px var(--mono);text-align:right;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:var(--bg);color:var(--fg)}
+.inputs input.edited{border-color:var(--accent);background:var(--accent-soft)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.status{font-size:13px;color:var(--muted)}
+textarea.copybox{width:100%;height:120px;font:12px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px}
+ul.src{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:14px}
+ul.src a{color:var(--accent)}
+.notes{font-size:13px;color:var(--muted);display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.notes h3{color:var(--fg);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.notes ul{margin:0;padding-left:16px}
+footer{font-size:12px;color:var(--muted)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line-strong);padding-top:6px;margin-top:-8px}
+nav.tabs a{font:700 14px var(--display);color:var(--muted);text-decoration:none;padding:10px 14px;border-bottom:3px solid transparent;white-space:nowrap}
+nav.tabs a:hover{color:var(--fg)}
+nav.tabs a[aria-current="page"]{color:var(--accent);border-bottom-color:var(--accent)}
+.view{display:flex;flex-direction:column;gap:28px}
+.view[hidden]{display:none!important}
+.viewbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.reqs td{white-space:normal;vertical-align:top;text-align:left}
+.reqs th{text-align:left}
+.reqs td:first-child{font-weight:600;min-width:220px}
+.reqs a{color:var(--accent)}
+.pill{display:inline-block;font:700 11px var(--body);text-transform:uppercase;letter-spacing:.05em;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:var(--good-soft);color:var(--good)}
+.pill.prog{background:var(--accent-soft);color:var(--accent)}
+.pill.warn{background:var(--bad-soft);color:var(--bad)}
+.insights{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.ins{border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.ins .n{font:700 12px var(--mono);color:var(--accent)}
+.ins h3{font-size:16px}
+.ins p{font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:600 12px var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:3px 7px}
+.chip span{font-family:var(--body);font-weight:600;color:var(--muted);margin-right:4px}
+.ins .foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;font-size:12px;margin-top:auto;padding-top:6px;border-top:1px solid var(--line)}
+.ins .foot a{color:var(--accent);font-weight:700;text-decoration:none}
+td .imp{display:block;font-size:12px;line-height:1.4;color:var(--muted);white-space:normal;margin-top:3px;max-width:44ch}
+td .imp b{color:var(--fg)}
+td.rname button{all:unset;cursor:pointer;font-weight:600;color:var(--fg)}
+td.rname button:hover,td.rname button:focus-visible{color:var(--accent);text-decoration:underline}
+tr.sel td{background:var(--accent-soft)}
+.wb th,.wb td{font-size:13px;padding:5px 10px}
+.wb td:first-child,.wb th:first-child{position:sticky;left:0;background:var(--surface);z-index:1;min-width:250px;white-space:normal}
+.wb td.der{font-style:italic;color:var(--muted);background:var(--accent-soft)}
+.ift{min-width:720px}
+.ins:last-child:nth-child(3n+1){grid-column:1/-1}
+.wb td.miss{color:var(--line-strong)}
+.wb tr.co th{color:var(--surface);font-family:var(--display);text-transform:none;letter-spacing:0;font-size:13px}
+.wb tr.sub td{font:700 12px var(--display);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);background:var(--bg);padding-top:12px}
+.wb tr.sub td:first-child{background:var(--bg)}
+.wb-legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12px;color:var(--muted)}
+.wb-legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block;border:1px solid var(--line-strong)}
+.sw-in{background:var(--surface)} .sw-der{background:var(--accent-soft)} .sw-miss{background:var(--bg);border-style:dashed}
+.tagline{color:var(--fg);font-weight:600}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:width .25s ease}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">INSC 75663 · Team Aster · Supply Chain Financial Analysis</div>
+      <h1>Home Improvement Ratio Lab</h1>
+      <p class="lede">Home Depot against Lowe's, Floor &amp; Decor and Tractor Supply, FY2025 and FY2024, built from each company's 10-K with the course ratio template and Strategic Profit Model.</p>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Fiscal year">
+        <button type="button" id="y25" aria-pressed="true">FY2025</button>
+        <button type="button" id="y24" aria-pressed="false">FY2024</button>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Views">
+    <a href="#summary" data-view="summary">Summary</a>
+    <a href="#ratios" data-view="ratios">Ratios</a>
+    <a href="#whatif" data-view="whatif">What If</a>
+    <a href="#workbook" data-view="workbook">Workbook View</a>
+    <a href="#sources" data-view="sources">Sources &amp; Inputs</a>
+  </nav>
+
+  <div class="view" id="v-summary">
+    <section class="panel" aria-labelledby="rq-h">
+      <div class="sec-head">
+        <div><div class="eyebrow">Assignment Checklist</div><h2 id="rq-h">What the Assignment Requires and Where It Is Covered</h2></div>
+        <p class="muted">From the syllabus and the Oct 24 class brief. Status as of Oct 24, 2026.</p>
+      </div>
+      <div class="scroll"><table class="reqs" id="reqs"></table></div>
+    </section>
+    <section class="panel" aria-labelledby="ins-h">
+      <div class="sec-head">
+        <div><div class="eyebrow">Draft Observations</div><h2 id="ins-h">Seven Findings Tied to the Data</h2></div>
+        <p class="muted">FY2025 vs. FY2024, recalculated from the inputs. Drafts for the Nov 4 meeting: the submitted summary must be in the team's own words.</p>
+      </div>
+      <div class="insights" id="insights"></div>
+    </section>
+    <section class="panel" aria-labelledby="spm-h">
+      <div class="sec-head">
+        <div><div class="eyebrow">Strategic Profit Model</div><h2 id="spm-h">How Margin and Asset Turnover Combine into Return</h2></div>
+        <p class="muted">SC operating margin × asset turnover = ROA (using SCOM). ROPA divides the same operating profit by inventory plus PP&amp;E, the assets the supply chain controls.</p>
+      </div>
+      <div class="scroll"><div class="spm" id="spm"></div></div>
+    </section>
+  </div>
+
+  <div class="view" id="v-ratios" hidden>
+    <section class="panel" aria-labelledby="rc-h">
+      <div class="sec-head">
+        <div><div class="eyebrow">Compare a Ratio</div><h2 id="rc-h">Ratio by Company</h2></div>
+        <div class="controls"><label for="rsel" class="muted">Ratio</label><select id="rsel"></select></div>
+      </div>
+      <p class="muted" id="rc-def"></p>
+      <div class="scroll"><svg id="rchart" role="img" aria-labelledby="rc-h" style="width:100%;max-width:760px;min-width:480px;display:block;margin:0 auto"></svg></div>
+      <p class="callout" id="rc-why"></p>
+    </section>
+    <section class="panel" aria-labelledby="rt-h">
+      <div class="sec-head">
+        <div><div class="eyebrow">Ratio Sheet</div><h2 id="rt-h">Template Ratios, Side by Side</h2></div>
+        <p class="muted">Same formulas as "Income stmt and balance sheet 102226.xlsx", plus goodwill and lease adjustments. Bold marks the leader; the small line shows the change from FY2024. Select a ratio name to chart it.</p>
+      </div>
+      <div class="scroll"><table id="ratios"></table></div>
+    </section>
+  </div>
+
+  <div class="view" id="v-whatif" hidden>
+    <div class="viewbar"><label for="co" class="muted">Company</label><select id="co"></select><span class="muted" id="wi-yr"></span></div>
+    <section class="panel" aria-labelledby="it-h">
+      <div class="sec-head">
+        <div><div class="eyebrow">If/Then Analysis</div><h2 id="it-h">If a Key Ratio Moves, Then What Happens to Returns?</h2></div>
+      </div>
+      <p class="muted">Each row moves one ratio and holds everything else at the reported 10-K figure. Match Best Peer uses the strongest of the other three companies on that ratio. Where business models differ (Floor &amp; Decor's specialty margins, for example), a peer match shows the size of the gap, not a realistic target.</p>
+      <div class="scroll"><table class="ift" id="ifthen"></table></div>
+    </section>
+    <section class="panel" aria-labelledby="wi-h">
+      <div class="sec-head">
+        <div><div class="eyebrow">Sensitivity</div><h2 id="wi-h">What If One Company Changed Its Supply Chain?</h2></div>
+      </div>
+      <div class="bench">
+        <div class="sliders">
+          <div class="presets" id="presets"></div>
+          <div class="sl"><label for="s-inv">Inventory Days</label><output id="o-inv"></output><input type="range" id="s-inv"><span class="hint" id="h-inv"></span></div>
+          <div class="sl"><label for="s-pay">Payables Days</label><output id="o-pay"></output><input type="range" id="s-pay" min="-20" max="20" step="1"><span class="hint" id="h-pay"></span></div>
+          <div class="sl"><label for="s-cogs">COGS, % of Sales</label><output id="o-cogs"></output><input type="range" id="s-cogs" min="-3" max="3" step="0.1"><span class="hint" id="h-cogs"></span></div>
+          <div class="sl"><label for="s-sga">SG&amp;A, % of Sales</label><output id="o-sga"></output><input type="range" id="s-sga" min="-3" max="3" step="0.1"><span class="hint" id="h-sga"></span></div>
+          <div class="sl"><label for="s-ppe">PP&amp;E</label><output id="o-ppe"></output><input type="range" id="s-ppe" min="-20" max="20" step="1"><span class="hint" id="h-ppe"></span></div>
+          <div class="sl"><label for="s-rev">Sales</label><output id="o-rev"></output><input type="range" id="s-rev" min="-10" max="10" step="0.5"><span class="hint">Costs scale with sales at the percentages above</span></div>
+          <div class="toolbar"><button type="button" class="btn" id="reset-s">Reset Levers</button></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+          <div class="outs" id="outs"></div>
+          <p class="callout" id="story"></p>
+        </div>
+      </div>
+      <div>
+        <h3 id="tor-h">Which Lever Moves ROPA Most</h3>
+        <p class="muted" style="font-size:13px;margin:2px 0 8px">Each 10-K input moved 10% up and down with everything else held at the reported figure.</p>
+        <div class="scroll"><svg id="tornado" role="img" aria-labelledby="tor-h" style="width:100%;max-width:760px;min-width:520px;display:block;margin:0 auto"></svg></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="view" id="v-workbook" hidden>
+    <section class="panel" aria-labelledby="wb-h">
+      <div class="sec-head">
+        <div><div class="eyebrow">Workbook View</div><h2 id="wb-h">All Four Companies in the Assignment's Spreadsheet Layout</h2></div>
+        <p class="muted">Rows and order follow the example workbook; US$ millions. <span class="tagline" id="wb-gap"></span></p>
+      </div>
+      <div class="wb-legend"><span><i class="sw sw-in"></i>From the 10-K</span><span><i class="sw sw-der"></i>Derived from other lines</span><span><i class="sw sw-miss"></i>Not pulled yet; fill from the 10-K</span></div>
+      <div class="scroll wb-scroll"><table class="wb" id="wb"></table></div>
+    </section>
+  </div>
+
+  <div class="view" id="v-sources" hidden>
+    <section class="panel" aria-labelledby="in-h">
+      <div class="sec-head">
+        <div><div class="eyebrow">Sources &amp; Inputs</div><h2 id="in-h">10-K Figures Behind Every Number</h2></div>
+        <p class="muted">US$ millions; employees in thousands. Edit any cell to match the team workbook and every view recalculates. Edits stay in this browser only.</p>
+      </div>
+      <div class="toolbar">
+        <button type="button" class="btn" id="copy">Copy Ratios as CSV</button>
+        <button type="button" class="btn" id="reset-d">Reset to 10-K Figures</button>
+        <span class="status" id="status" role="status"></span>
+      </div>
+      <textarea class="copybox" id="copybox" hidden readonly aria-label="Ratios as CSV"></textarea>
+      <div class="scroll"><table class="inputs" id="inputs"></table></div>
+    </section>
+    <section class="panel" aria-labelledby="src-h">
+      <div class="sec-head"><div><div class="eyebrow">Citations</div><h2 id="src-h">Resources, Filings and Notes</h2></div></div>
+      <h3>Resources</h3>
+      <ul class="src">
+        <li>Swink, M. (2026). <i>Income stmt and balance sheet 102226.xlsx</i> [Ratio template]. INSC 75663 Supply Chain and Operational Strategy, Neeley School of Business, Texas Christian University.</li>
+        <li>Swink, M. (2026). <i>How SCM affects the bottom line: Strategic Profit Model</i> [Lecture slides, Zara finance implications of SCM]. INSC 75663, Texas Christian University.</li>
+        <li>Swink, M., Melnyk, S. A., &amp; Hartley, J. L. (2024). <i>Managing operations across the supply chain</i> (5th ed.). McGraw Hill.</li>
+      </ul>
+      <h3>Company Filings</h3>
+      <ul class="src" id="sources"></ul>
+      <div class="notes" id="notes"></div>
+    </section>
+  </div>
+
+  <footer>Figures pulled from company 10-K filings and earnings releases with AI assistance on Oct 24, 2026; verify each against the filing before it goes into the graded workbook, and cite AI use. SCOM = sales − COGS − SG&amp;A as reported. Ratio definitions and the Strategic Profit Model follow M. Swink, INSC 75663 course materials (see Sources &amp; Inputs).</footer>
+</div>
+
+<script>
+const DATA = [{"company": "Home Depot", "ticker": "HD", "years": {"FY2025": {"period_end": "2026-02-01", "cash": 1389, "receivables": 5597, "inventory": 25817, "total_current_assets": 34391, "ppe_net": 28021, "total_assets": 105095, "total_current_liabilities": 32424, "accounts_payable": 11491, "revenue": 164683, "cogs": 109818, "gross_profit": 54865, "sga": 30702, "depreciation_amortization": 3273, "operating_income": 20890, "net_income": 14156, "employees_thousands": 472.4, "goodwill_intangibles": 32673, "rou_assets": 9204}, "FY2024": {"period_end": "2025-02-02", "cash": 1659, "receivables": 4903, "inventory": 23451, "total_current_assets": 31683, "ppe_net": 26702, "total_assets": 96119, "total_current_liabilities": 28661, "accounts_payable": 11938, "revenue": 159514, "cogs": 106206, "gross_profit": 53308, "sga": 28748, "depreciation_amortization": 3034, "operating_income": 21526, "net_income": 14806, "employees_thousands": 470.1, "goodwill_intangibles": 28458, "rou_assets": 8592}}, "fy2023_revenue": 152669, "sources": [{"title": "Home Depot 8-K Ex. 99.1, Q4 and fiscal 2025 results", "url": "https://www.sec.gov/Archives/edgar/data/354950/000035495026000026/hd_exhibit991x02012026.htm"}, {"title": "Home Depot 8-K Ex. 99.1, Q4 and fiscal 2024 results", "url": "https://www.sec.gov/Archives/edgar/data/354950/000035495025000030/hd_exhibit991x02022025.htm"}, {"title": "Home Depot 10-K, fiscal 2025", "url": "https://www.sec.gov/Archives/edgar/data/354950/000162828026019436/hd-20260201.htm"}, {"title": "Home Depot 10-K, fiscal 2024", "url": "https://www.sec.gov/Archives/edgar/data/354950/000035495025000085/hd-20250202.htm"}], "notes": ["Statements taken from the fiscal 2025 earnings release (8-K Ex. 99.1); confirm against 10-K Item 8.", "Fiscal 2024 had 53 weeks (about $2.5B extra sales), which depresses FY2025 growth.", "SRS bought in fiscal 2024 (part-year); GMS added in fiscal 2025, lifting receivables, inventory and goodwill.", "SG&A excludes depreciation and amortization, which HD reports on its own line.", "PP&E excludes operating lease right-of-use assets.", "Goodwill $22,344M and intangibles $10,329M in FY2025 ($19,475M and $8,983M in FY2024), from the earnings release."]}, {"company": "Lowe's", "ticker": "LOW", "years": {"FY2025": {"period_end": "2026-01-30", "cash": 982, "receivables": 1090, "inventory": 17300, "total_current_assets": 20955, "ppe_net": 18362, "total_assets": 54144, "total_current_liabilities": 19463, "accounts_payable": 9762, "revenue": 86286, "cogs": 57401, "gross_profit": 28885, "sga": 16791, "depreciation_amortization": 1941, "operating_income": 10153, "net_income": 6654, "employees_thousands": 276, "goodwill_intangibles": 9853, "rou_assets": 4303}, "FY2024": {"period_end": "2025-01-31", "cash": 1761, "receivables": 94, "inventory": 17409, "total_current_assets": 20358, "ppe_net": 17649, "total_assets": 43102, "total_current_liabilities": 18757, "accounts_payable": 9290, "revenue": 83674, "cogs": 55797, "gross_profit": 27877, "sga": 15682, "depreciation_amortization": 1729, "operating_income": 10466, "net_income": 6957, "employees_thousands": 270, "goodwill_intangibles": 588, "rou_assets": 3738}}, "fy2023_revenue": 86377, "sources": [{"title": "Lowe's Q4 2025 sales and earnings release", "url": "https://corporate.lowes.com/newsroom/press-releases/lowes-reports-fourth-quarter-2025-sales-and-earnings-results-02-25-26"}, {"title": "Lowe's Q4 2025 financial statements (PDF)", "url": "https://corporate.lowes.com/sites/lowes-corp/files/Quaterly-results/Q4-2025-Financial-Statements-and-Non-GAAP.pdf"}, {"title": "Lowe's 10-K, fiscal 2025", "url": "https://www.sec.gov/Archives/edgar/data/60667/000006066726000029/low-20260130.htm"}, {"title": "Lowe's 10-K, fiscal 2024", "url": "https://www.sec.gov/Archives/edgar/data/60667/000006066725000049/low-20250131.htm"}, {"title": "Lowe's Q4 2024 sales and earnings release", "url": "https://corporate.lowes.com/newsroom/press-releases/lowes-reports-fourth-quarter-2024-sales-and-earnings-results-02-26-25"}], "notes": ["FBM and ADG acquired in fiscal 2025: goodwill and intangibles up about $9.3B, total assets up about $11B, receivables up from $94M to $1,090M.", "Shareholders' equity is a deficit in both years, so equity-based ratios are not meaningful.", "Fiscal 2023 had 53 weeks, which depresses FY2024 growth.", "SG&A excludes depreciation and amortization; PP&E excludes lease right-of-use assets.", "Goodwill $3,945M and intangibles $5,908M in FY2025 ($311M and $277M in FY2024)."]}, {"company": "Floor & Decor", "ticker": "FND", "years": {"FY2025": {"period_end": "2025-12-25", "cash": 249.3, "receivables": 94.1, "inventory": 1133.1, "total_current_assets": 1527.9, "ppe_net": 1856.1, "total_assets": 5469.4, "total_current_liabilities": 1151.4, "accounts_payable": 683.7, "revenue": 4684.1, "cogs": 2640.2, "gross_profit": 2043.9, "sga": 1773.8, "depreciation_amortization": 241.2, "operating_income": 270.1, "net_income": 208.6, "employees_thousands": 13.723, "goodwill_intangibles": 404.5, "rou_assets": 1617.8}, "FY2024": {"period_end": "2024-12-26", "cash": 187.7, "receivables": 101.5, "inventory": 1132.6, "total_current_assets": 1492.4, "ppe_net": 1786.6, "total_assets": 5050.5, "total_current_liabilities": 1244.2, "accounts_payable": 794.9, "revenue": 4455.8, "cogs": 2527.5, "gross_profit": 1928.3, "sga": 1672.1, "depreciation_amortization": 232.5, "operating_income": 256.2, "net_income": 205.9, "employees_thousands": 13.69, "goodwill_intangibles": 408.1, "rou_assets": 1331.2}}, "fy2023_revenue": 4413.9, "sources": [{"title": "Floor & Decor 10-K, fiscal 2025", "url": "https://www.sec.gov/Archives/edgar/data/1507079/000162828026009770/fnd-20251225.htm"}, {"title": "Floor & Decor 10-K fiscal 2025: balance sheets (XBRL R2)", "url": "https://www.sec.gov/Archives/edgar/data/1507079/000162828026009770/R2.htm"}, {"title": "Floor & Decor 10-K fiscal 2025: statements of operations (XBRL R4)", "url": "https://www.sec.gov/Archives/edgar/data/1507079/000162828026009770/R4.htm"}, {"title": "Floor & Decor Q4 and fiscal 2025 earnings release", "url": "https://www.sec.gov/Archives/edgar/data/1507079/000162828026009760/fnd-2025earningsreleaseex9.htm"}, {"title": "Floor & Decor 10-K, fiscal 2024", "url": "https://www.sec.gov/Archives/edgar/data/1507079/000150707925000013/fnd-20241226.htm"}], "notes": ["Reported in thousands; converted to millions.", "SG&A is one combined line and includes depreciation, unlike HD, Lowe's and Tractor Supply, so its SCOM is slightly understated against them.", "Year ends in late December, about five weeks before HD and Lowe's.", "Employees: 13,723 (FY2025) and 13,690 (FY2024) total headcount.", "Goodwill $257.9M both years; intangibles $146.5M (FY2025) and $150.2M (FY2024)."]}, {"company": "Tractor Supply", "ticker": "TSCO", "years": {"FY2025": {"period_end": "2025-12-27", "cash": 194.1, "receivables": null, "inventory": 3084.1, "total_current_assets": 3507.8, "ppe_net": 3026.5, "total_assets": 10933.7, "total_current_liabilities": 2614.4, "accounts_payable": 1390.8, "revenue": 15524.0, "cogs": 9869.5, "gross_profit": 5654.5, "sga": 3693.1, "depreciation_amortization": 494.0, "operating_income": 1467.4, "net_income": 1096.1, "employees_thousands": 52.0, "goodwill_intangibles": 398.8, "rou_assets": 3938.4}, "FY2024": {"period_end": "2024-12-28", "cash": 251.5, "receivables": null, "inventory": 2840.2, "total_current_assets": 3309.9, "ppe_net": 2727.4, "total_assets": 9805.5, "total_current_liabilities": 2319.2, "accounts_payable": 1236.2, "revenue": 14883.2, "cogs": 9486.7, "gross_profit": 5396.6, "sga": 3481.9, "depreciation_amortization": 447.2, "operating_income": 1467.5, "net_income": 1101.2, "employees_thousands": 52.0, "goodwill_intangibles": 269.5, "rou_assets": 3415.4}}, "fy2023_revenue": 14555.7, "sources": [{"title": "Tractor Supply 8-K Ex. 99.1, Q4 and fiscal 2025 earnings release", "url": "https://www.sec.gov/Archives/edgar/data/916365/000091636526000005/ex991-q42025earningsrelease.htm"}, {"title": "Tractor Supply 10-K, fiscal 2025", "url": "https://www.sec.gov/Archives/edgar/data/916365/000091636526000014/tsco-20251227.htm"}, {"title": "Tractor Supply 10-K, fiscal 2024", "url": "https://www.sec.gov/Archives/edgar/data/916365/000091636525000076/tsco-20241228.htm"}, {"title": "Tractor Supply 8-K Ex. 99.1, Q4 and fiscal 2024 earnings release", "url": "https://www.sec.gov/Archives/edgar/data/916365/000091636525000008/ex991-q42024earningsrelease.htm"}], "notes": ["No trade receivables reported; the only receivable is income taxes ($27.0M FY2025, $21.6M FY2024), left out so receivable days read zero.", "Statements taken from earnings releases; confirm against 10-K Item 8.", "Employees are about 26,000 full-time plus 26,000 part-time in both years (approximate).", "Fiscal 2023 likely had 53 weeks (not confirmed), which would depress FY2024 growth.", "SG&A excludes depreciation and amortization; PP&E excludes lease right-of-use assets.", "Goodwill and other intangibles reported as one line: $398.8M (FY2025), $269.5M (FY2024)."]}];
+const ORDER = ['HD','LOW','FND','TSCO'];
+const COLOR = {HD:'var(--hd)',LOW:'var(--low)',FND:'var(--fnd)',TSCO:'var(--tsco)'};
+const SHORT = {HD:'Home Depot',LOW:"Lowe's",FND:'Floor & Decor',TSCO:'Tractor Supply'};
+const FIELDS = [
+ ['revenue','Revenue'],['cogs','Cost of Goods Sold'],['gross_profit','Gross Profit'],['sga','SG&A'],['operating_income','Operating Income'],['net_income','Net Income'],
+ ['cash','Cash'],['receivables','Receivables'],['inventory','Inventory'],['total_current_assets','Total Current Assets'],['ppe_net','PP&E, Net'],['rou_assets','Operating Lease ROU Assets'],['goodwill_intangibles','Goodwill & Intangibles'],['total_assets','Total Assets'],
+ ['accounts_payable','Accounts Payable'],['total_current_liabilities','Total Current Liabilities'],['employees_thousands','Employees (Thousands)']
+];
+const KEY='ratio-lab-edits-v1';
+const base = JSON.parse(JSON.stringify(DATA));
+let data = JSON.parse(JSON.stringify(DATA));
+try{const saved=JSON.parse(localStorage.getItem(KEY)||'null'); if(saved){for(const t in saved){for(const fy in saved[t]){for(const k in saved[t][fy]){const c=byT(t); if(c&&c.years[fy]) c.years[fy][k]=saved[t][fy][k];}}}}}catch(e){}
+let year='FY2025', co='HD';
+const lever={inv:0,pay:0,cogs:0,sga:0,ppe:0,rev:0};
+
+function byT(t){return data.find(c=>c.ticker===t)}
+function baseT(t){return base.find(c=>c.ticker===t)}
+const n=v=>(typeof v==='number'&&isFinite(v))?v:null;
+function div(a,b){return (n(a)===null||n(b)===null||b===0)?null:a/b}
+
+function ratios(t,fy){
+  const c=byT(t), d=c.years[fy]; if(!d) return null;
+  const prevRev = fy==='FY2025' ? (c.years.FY2024||{}).revenue : c.fy2023_revenue;
+  const gp = n(d.gross_profit)!==null ? d.gross_profit : (n(d.revenue)!==null&&n(d.cogs)!==null? d.revenue-d.cogs : null);
+  const scop = (n(d.revenue)!==null&&n(d.cogs)!==null&&n(d.sga)!==null)? d.revenue-d.cogs-d.sga : null;
+  const inv=div(d.inventory,d.cogs), rec=div(d.receivables,d.revenue), pay=div(d.accounts_payable,d.cogs);
+  const r={
+    wcs:div((d.total_current_assets??NaN)-(d.total_current_liabilities??NaN),d.revenue),
+    cashA:div(d.cash,d.total_assets),
+    invDays:inv===null?null:inv*365, recDays:rec===null?(d.receivables==null?null:null):rec*365, payDays:pay===null?null:pay*365,
+    ato:div(d.revenue,d.total_assets), ppeT:div(d.revenue,d.ppe_net), ppeA:div(d.ppe_net,d.total_assets),
+    spe:div(d.revenue,d.employees_thousands),
+    growth:(n(prevRev)!==null&&n(d.revenue)!==null)?(d.revenue-prevRev)/prevRev:null,
+    gm:div(gp,d.revenue), gproi:div(gp,d.inventory), opm:div(d.operating_income,d.revenue), roa:div(d.net_income,d.total_assets),
+    scom:div(scop,d.revenue), roaS:div(scop,d.total_assets), roicS:div(scop,(d.total_assets??NaN)-(d.cash??NaN)),
+    ropa:div(scop,(d.ppe_net??NaN)+(d.inventory??NaN)),
+    roaSxg:div(scop,(d.total_assets??NaN)-(d.goodwill_intangibles??NaN)),
+    ropaL:div(scop,(d.ppe_net??NaN)+(d.rou_assets??NaN)+(d.inventory??NaN)),
+    gwA:div(d.goodwill_intangibles,d.total_assets),
+    leaseShare:div(d.rou_assets,(d.ppe_net??NaN)+(d.rou_assets??NaN)),
+    cur:div(d.total_current_assets,d.total_current_liabilities), quick:div((d.total_current_assets??NaN)-(d.inventory??NaN),d.total_current_liabilities)
+  };
+  r.ccc = (r.invDays!==null&&r.payDays!==null)? r.invDays+(r.recDays||0)-r.payDays : null;
+  return r;
+}
+
+const ROWS=[
+ ['Working Capital Productivity'],
+ ['wcs','Working Capital / Sales','(current assets − current liabilities) ÷ sales','pct',-1,'Cash tied up to support each dollar of sales; lower means a leaner supply chain.'],
+ ['cashA','Cash / Assets','cash ÷ total assets','pct',0,'Liquidity cushion; idle cash adds safety but drags return on assets.'],
+ ['invDays','Inventory Days','inventory ÷ COGS × 365','days',-1,'How long goods sit before they sell. Fewer days frees cash and cuts markdown risk, a key mismatch cost.'],
+ ['recDays','Receivables Days','365 × receivables ÷ sales','days',-1,'How fast customers pay. It matters more as retailers sell to pros on credit.'],
+ ['payDays','Payables Days','365 × payables ÷ COGS','days',1,'How long suppliers wait to be paid. More days means suppliers finance inventory, but squeezing them strains the relationship.'],
+ ['ccc','Cash Conversion Cycle','inventory + receivable − payable days','days',-1,'Days between paying suppliers and collecting from customers; the core test of supply chain cash efficiency.'],
+ ['Non-Current Asset Productivity'],
+ ['ato','Asset Turnover','sales ÷ total assets','x',1,'Sales produced by every dollar the company owns; shows how productive the store and DC network is.'],
+ ['ppeT','PP&E Turnover','sales ÷ PP&E','x',1,'Sales per dollar of stores, distribution centers and equipment; the payoff from network investment.'],
+ ['ppeA','PP&E / Assets','PP&E ÷ total assets','pct',0,'How asset-heavy the model is; more fixed assets means more capacity to keep busy.'],
+ ['leaseShare','Leased Share of Physical Assets','lease ROU assets ÷ (PP&E + lease ROU assets)','pct',0,'The own-versus-lease choice. Leasing keeps stores off the PP&E line, which flatters PP&E turnover and ROPA.'],
+ ['gwA','Goodwill & Intangibles / Assets','goodwill and intangibles ÷ total assets','pct',0,'How much of the asset base is acquisition premium rather than physical network.'],
+ ['Labor Productivity'],
+ ['spe','Sales per Employee','$ thousands per employee','k',1,'Labor productivity; reflects store staffing, formats and automation.'],
+ ['Growth and Profitability'],
+ ['growth','Sales Growth','vs. prior fiscal year','pct',1,'Volume growth spreads the fixed cost of stores and DCs over more sales.'],
+ ['gm','Gross Margin','gross profit ÷ sales','pct',1,'Pricing power and sourcing cost; set by product mix, buying scale and markdowns.'],
+ ['gproi','GPROI','gross profit ÷ inventory','x',1,'Gross profit earned on each dollar of inventory; balances margin against turns, the classic retail inventory test.'],
+ ['opm','Operating Margin','operating income ÷ sales','pct',1,'Profit after all operating costs, including depreciation.'],
+ ['roa','ROA','net income ÷ total assets','pct',1,'Bottom-line return on everything the company owns, after interest and tax.'],
+ ['scom','SC Operating Margin (SCOM)','(sales − COGS − SG&A) ÷ sales','pct',1,"The supply chain margin: what is left after product and operating costs, before depreciation, interest and tax."],
+ ['roaS','ROA Using SCOM','SC operating profit ÷ total assets','pct',1,'Supply chain profit per dollar of total assets; equals SCOM × asset turnover.'],
+ ['roaSxg','ROA Using SCOM, Excl. Goodwill','SC operating profit ÷ (total assets − goodwill & intangibles)','pct',1,'Removes acquisition accounting; the gap to ROA Using SCOM shows how much acquisitions dilute the return.'],
+ ['roicS','ROIC Using SCOM','SC operating profit ÷ (assets − cash)','pct',1,'Return on the capital actually put to work in operations, leaving out idle cash.'],
+ ['ropa','ROPA Using SCOM','SC operating profit ÷ (PP&E + inventory)','pct',1,'Return on the assets the supply chain controls directly; the best single test of supply chain efficiency.'],
+ ['ropaL','ROPA Incl. Leased Assets','SC operating profit ÷ (PP&E + lease ROU assets + inventory)','pct',1,'Counts leased stores like owned ones, so heavy leasers and heavy owners compare fairly.'],
+ ['Liquidity'],
+ ['cur','Current Ratio','current assets ÷ current liabilities','x',0,'Ability to cover short-term bills; retailers often run near 1 because suppliers finance inventory.'],
+ ['quick','Quick Ratio','(current assets − inventory) ÷ current liabilities','x',0,'Liquidity without counting inventory; low values are normal for inventory-heavy retailers.']
+];
+function fmt(v,kind,d){ if(v===null||v===undefined||!isFinite(v)) return '—';
+  if(kind==='pct') return (v*100).toFixed(d??1)+'%';
+  if(kind==='days') return v.toFixed(d??0)+' d';
+  if(kind==='x') return v.toFixed(d??2)+'×';
+  if(kind==='k') return '$'+Math.round(v).toLocaleString('en-US')+'K';
+  if(kind==='m') return '$'+Math.round(v).toLocaleString('en-US')+'M';
+  return String(v);}
+function dfmt(v,kind){ if(v===null||!isFinite(v)) return '';
+  const s=v>0?'+':(v<0?'−':'±'); const a=Math.abs(v);
+  if(kind==='pct') return s+(a*100).toFixed(1)+' pts';
+  if(kind==='days') return s+a.toFixed(0)+' d';
+  if(kind==='x') return s+a.toFixed(2)+'×';
+  if(kind==='k') return s+'$'+Math.round(a)+'K';
+  return '';}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function legend(){document.getElementById('legend').innerHTML=ORDER.map(t=>`<span><i class="dot" style="background:${COLOR[t]}"></i>${esc(SHORT[t])}</span>`).join('');}
+
+function renderSPM(){
+  const R={}; ORDER.forEach(t=>R[t]=ratios(t,year)||{});
+  const rows=[['scom','SC Operating Margin','sales − COGS − SG&A','pct',''],['ato','Asset Turnover','sales ÷ total assets','x','×'],['roaS','ROA Using SCOM','margin × turnover','pct','='],['ropa','ROPA Using SCOM','SC profit ÷ (PP&E + inventory)','pct','']];
+  let h=`<div class="h">${esc(year)}</div>`+ORDER.map(t=>`<div class="h"><i class="dot" style="background:${COLOR[t]}"></i>${esc(SHORT[t])}</div>`).join('');
+  rows.forEach(([k,l,s,kind,op])=>{
+    const vals=ORDER.map(t=>R[t][k]); const mx=Math.max(...vals.filter(v=>v!==null&&isFinite(v)),0.0001);
+    const cls=k==='roaS'?' result':'';
+    h+=`<div class="lbl${cls}">${op?`<span class="op">${op}</span>`:''}${esc(l)}<small>${esc(s)}</small></div>`;
+    ORDER.forEach((t,i)=>{const v=vals[i]; const w=v===null?0:Math.max(0,Math.min(100,v/mx*100));
+      h+=`<div class="cellbar${cls}"><span class="v">${fmt(v,kind)}</span><span class="bar"><i style="width:${w}%;background:${COLOR[t]}"></i></span></div>`;});
+  });
+  document.getElementById('spm').innerHTML=h;
+}
+
+function renderTable(){
+  const R={},P={}; ORDER.forEach(t=>{R[t]=ratios(t,year)||{}; P[t]=year==='FY2025'?(ratios(t,'FY2024')||{}):null;});
+  let h=`<thead><tr><th>Ratio</th>${ORDER.map(t=>`<th><span class="legend"><span><i class="dot" style="background:${COLOR[t]}"></i>${esc(SHORT[t])}</span></span></th>`).join('')}</tr></thead><tbody>`;
+  ROWS.forEach(r=>{
+    if(r.length===1){h+=`<tr class="group"><td colspan="${ORDER.length+1}">${esc(r[0])}</td></tr>`;return;}
+    const [k,l,def,kind,dir,why]=r; const vals=ORDER.map(t=>R[t][k]);
+    let lead=-1; if(dir!==0){const ok=vals.map((v,i)=>[v,i]).filter(([v])=>v!==null&&isFinite(v)); if(ok.length>1){ok.sort((a,b)=>dir>0?b[0]-a[0]:a[0]-b[0]); lead=ok[0][1];}}
+    const im=impactLine(k);
+    h+=`<tr class="${k===rk?'sel':''}"><td class="rname"><button type="button" data-k="${k}" aria-label="Chart ${esc(l)}">${esc(l)}</button><span class="def">${esc(def)}</span><span class="why"><b>Why It Matters:</b> ${esc(why)}</span>${im?`<span class="imp"><b>Impact:</b> ${im}</span>`:''}</td>`;
+    ORDER.forEach((t,i)=>{const v=vals[i]; let d='';
+      if(P[t]&&P[t][k]!=null&&v!=null&&k!=='growth'){const dv=v-P[t][k]; const good=dir===0?'flat':(dv*dir>0?'up':(dv*dir<0?'down':'flat')); d=`<span class="delta ${good}">${dfmt(dv,kind)} vs FY24</span>`;}
+      h+=`<td class="num${i===lead?' lead':''}"><span class="v">${fmt(v,kind)}</span>${d}</td>`;});
+    h+='</tr>';
+  });
+  document.getElementById('ratios').innerHTML=h+'</tbody>';
+}
+
+/* ---------- sensitivity ---------- */
+function scenario(t,fy,L){
+  const d=byT(t).years[fy]; const b=ratios(t,fy);
+  const rev=d.revenue*(1+L.rev/100);
+  const cogsPct=d.cogs/d.revenue+L.cogs/100, sgaPct=d.sga/d.revenue+L.sga/100;
+  const cogs=rev*cogsPct, sga=rev*sgaPct;
+  const invDays=Math.max(1,b.invDays+L.inv), payDays=Math.max(0,b.payDays+L.pay);
+  const inv=invDays/365*cogs, ap=payDays/365*cogs;
+  const rec=(d.receivables||0)*(1+L.rev/100);
+  const ppe=d.ppe_net*(1+L.ppe/100);
+  const ta=d.total_assets+(inv-d.inventory)+(ppe-d.ppe_net)+(rec-(d.receivables||0));
+  const sc=rev-cogs-sga;
+  const invAtBaseCogs=invDays/365*d.cogs, apAtBaseCogs=payDays/365*d.cogs;
+  return {scom:sc/rev, roaS:sc/ta, ropa:sc/(ppe+inv), ccc:invDays+(d.receivables?(rec/rev*365):0)-payDays, gproi:(rev-cogs)/inv,
+    cash:(d.inventory-invAtBaseCogs)+(apAtBaseCogs-d.accounts_payable), sc, baseSc:d.revenue-d.cogs-d.sga};
+}
+function peerBest(k,dir){let best=null; ORDER.filter(t=>t!==co).forEach(t=>{const v=(ratios(t,year)||{})[k]; if(v==null||!isFinite(v))return; if(best===null||(dir<0?v<best.v:v>best.v)) best={t,v};}); return best;}
+function pctOf(t,k){const d=byT(t).years[year]; return d[k]/d.revenue;}
+function peerBestPct(k){let best=null; ORDER.filter(t=>t!==co).forEach(t=>{const v=pctOf(t,k); if(!isFinite(v))return; if(best===null||v<best.v) best={t,v};}); return best;}
+
+function setupSliders(){
+  const b=ratios(co,year);
+  const s=document.getElementById('s-inv'); s.min=String(-Math.min(120,Math.ceil(b.invDays*0.7))); s.max='40'; s.step='1';
+  if(+lever.inv<+s.min) lever.inv=+s.min;
+}
+function renderBench(){
+  const b=ratios(co,year), d=byT(co).years[year], sc=scenario(co,year,lever);
+  const set=(id,v)=>{document.getElementById(id).value=String(v)};
+  set('s-inv',lever.inv);set('s-pay',lever.pay);set('s-cogs',lever.cogs);set('s-sga',lever.sga);set('s-ppe',lever.ppe);set('s-rev',lever.rev);
+  const sg=v=>v>0?'+':(v<0?'−':'±');
+  document.getElementById('o-inv').textContent=sg(lever.inv)+Math.abs(lever.inv)+' d';
+  document.getElementById('h-inv').textContent=`Reported ${b.invDays.toFixed(0)} days → ${(b.invDays+lever.inv).toFixed(0)} days`;
+  document.getElementById('o-pay').textContent=sg(lever.pay)+Math.abs(lever.pay)+' d';
+  document.getElementById('h-pay').textContent=`Reported ${b.payDays.toFixed(0)} days → ${(b.payDays+lever.pay).toFixed(0)} days`;
+  document.getElementById('o-cogs').textContent=sg(lever.cogs)+Math.abs(lever.cogs).toFixed(1)+' pts';
+  document.getElementById('h-cogs').textContent=`Reported ${(d.cogs/d.revenue*100).toFixed(1)}% → ${(d.cogs/d.revenue*100+lever.cogs).toFixed(1)}%`;
+  document.getElementById('o-sga').textContent=sg(lever.sga)+Math.abs(lever.sga).toFixed(1)+' pts';
+  document.getElementById('h-sga').textContent=`Reported ${(d.sga/d.revenue*100).toFixed(1)}% → ${(d.sga/d.revenue*100+lever.sga).toFixed(1)}%`;
+  document.getElementById('o-ppe').textContent=sg(lever.ppe)+Math.abs(lever.ppe)+'%';
+  document.getElementById('h-ppe').textContent=`Reported ${fmt(d.ppe_net,'m')} → ${fmt(d.ppe_net*(1+lever.ppe/100),'m')}`;
+  document.getElementById('o-rev').textContent=sg(lever.rev)+Math.abs(lever.rev).toFixed(1)+'%';
+  const card=(k,label,kind,cls)=>{const bv=k==='cash'?0:b[k], sv=sc[k]; const dv=sv-bv;
+    const good=k==='ccc'?dv<0:dv>0; const c=Math.abs(dv)<1e-9?'flat':(good?'up':'down');
+    const ch=k==='cash'?'':`<span class="chg ${c}">${dfmt(dv,kind)}</span>`;
+    return `<div class="out ${cls||''}"><span class="k">${label}</span><span class="vv">${k==='cash'?fmt(sv,'m').replace('$-','−$'):fmt(sv,kind)}</span>${k==='cash'?`<span class="bb">working capital released at today's COGS</span>`:`<span class="bb">reported ${fmt(bv,kind)}</span>`}${ch}</div>`;};
+  document.getElementById('outs').innerHTML=card('ropa','ROPA Using SCOM','pct','big')+card('roaS','ROA Using SCOM','pct')+card('scom','SC Operating Margin','pct')+card('ccc','Cash Conversion Cycle','days')+card('gproi','GPROI','x')+card('cash','Cash Freed','m','big');
+  const moved=Object.values(lever).some(v=>v!==0);
+  const st=document.getElementById('story');
+  if(!moved){st.textContent=`${SHORT[co]} ${year} as reported: ROPA ${fmt(b.ropa,'pct')}, inventory ${b.invDays.toFixed(0)} days, cash conversion cycle ${fmt(b.ccc,'days')}. Try a preset to borrow a peer's number.`;}
+  else{const dr=(sc.ropa-b.ropa)*100; st.textContent=`With these changes ${SHORT[co]}'s ROPA moves from ${fmt(b.ropa,'pct')} to ${fmt(sc.ropa,'pct')} (${dr>=0?'+':'−'}${Math.abs(dr).toFixed(1)} pts)`+(Math.abs(sc.cash)>1?`, and ${sc.cash>=0?'releases':'ties up'} about ${fmt(Math.abs(sc.cash),'m')} of working capital.`:'.');}
+  const pi=peerBest('invDays',-1), pp=peerBest('payDays',1), ps=peerBestPct('sga');
+  let ph='';
+  if(pi&&pi.v<b.invDays) ph+=`<button type="button" class="btn" data-p="inv" data-v="${Math.round(pi.v-b.invDays)}">Match ${esc(SHORT[pi.t])}'s Inventory Days (${pi.v.toFixed(0)})</button>`;
+  if(pp&&pp.v>b.payDays) ph+=`<button type="button" class="btn" data-p="pay" data-v="${Math.min(20,Math.round(pp.v-b.payDays))}">Match ${esc(SHORT[pp.t])}'s Payables Days${pp.v-b.payDays>20?' (Capped +20)':''}</button>`;
+  if(ps&&ps.v<d.sga/d.revenue) ph+=`<button type="button" class="btn" data-p="sga" data-v="${Math.max(-3,Math.round((ps.v-d.sga/d.revenue)*1000)/10)}">Match ${esc(SHORT[ps.t])}'s SG&amp;A %${(d.sga/d.revenue-ps.v)>0.03?' (Capped −3 Pts)':''}</button>`;
+  if(!ph) ph='<span class="muted" style="font-size:13px">This company already leads its peers on inventory, payables and SG&amp;A.</span>';
+  document.getElementById('presets').innerHTML=ph;
+  renderTornado();
+}
+function renderTornado(){
+  const d=byT(co).years[year];
+  const ropa=x=>(x.revenue-x.cogs-x.sga)/(x.ppe_net+x.inventory);
+  const b0=ropa(d);
+  const items=[['revenue','Sales (Prices; Costs Fixed)'],['cogs','Cost of Goods Sold'],['sga','SG&A'],['inventory','Inventory'],['ppe_net','PP&E']].map(([k,l])=>{
+    const lo=Object.assign({},d,{[k]:d[k]*0.9}), hi=Object.assign({},d,{[k]:d[k]*1.1});
+    const a=ropa(lo)-b0, c=ropa(hi)-b0; return {l,a,c,span:Math.abs(a-c)};}).sort((x,y)=>y.span-x.span);
+  const W=720, rowH=54, top=40, H=top+items.length*rowH+28;
+  const mx=Math.max(...items.map(i=>Math.max(Math.abs(i.a),Math.abs(i.c))),0.001);
+  const cx=W/2, sc=(W/2-24)*0.68/mx;
+  let g=`<line x1="${cx}" x2="${cx}" y1="${top-8}" y2="${H-24}" stroke="var(--line-strong)"/>`;
+  g+=`<text x="${cx}" y="${top-16}" text-anchor="middle" font-size="12" font-weight="600" fill="var(--muted)">${year} ROPA ${fmt(b0,'pct')}</text>`;
+  g+=`<text x="24" y="${H-6}" font-size="11.5" fill="var(--muted)">← Lower ROPA</text><text x="${W-24}" y="${H-6}" text-anchor="end" font-size="11.5" fill="var(--muted)">Higher ROPA →</text>`;
+  items.forEach((it,i)=>{const y0=top+i*rowH, y=y0+20;
+    g+=`<text x="${cx}" y="${y0+12}" text-anchor="middle" font-size="13" font-weight="600" fill="var(--fg)">${esc(it.l)}</text>`;
+    [[it.a,'−10%'],[it.c,'+10%']].forEach(([v,lab])=>{const x=v<0?cx+v*sc:cx, w=Math.max(1,Math.abs(v)*sc);
+      g+=`<rect x="${x}" y="${y}" width="${w}" height="22" rx="3" fill="${v<0?'var(--bad)':'var(--good)'}" fill-opacity="0.8"/>`;
+      const tx=v<0?x-6:x+w+6; g+=`<text x="${tx}" y="${y+15}" text-anchor="${v<0?'end':'start'}" font-size="11.5" fill="var(--muted)" font-family="var(--mono)">${lab}: ${v>=0?'+':'−'}${Math.abs(v*100).toFixed(1)}</text>`;});
+  });
+  const svg=document.getElementById('tornado'); svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.innerHTML=g;
+  document.getElementById('tor-h').textContent=`Which Lever Moves ${SHORT[co]}'s ROPA Most (${year}, Pts)`;
+}
+
+/* ---------- if/then ---------- */
+function zero(){return {inv:0,pay:0,cogs:0,sga:0,ppe:0,rev:0};}
+function renderIfThen(){
+  const b=ratios(co,year), d=byT(co).years[year], sgaPct=d.sga/d.revenue;
+  const peerGM=peerBest('gm',1), peerPPE=peerBest('ppeT',1);
+  const defs=[
+   {label:'Inventory Days',kind:'days',now:b.invDays,also:'cash',
+    step:{L:{inv:-10},txt:`Inventory days fall 10 (${b.invDays.toFixed(0)} → ${(b.invDays-10).toFixed(0)} days)`},
+    peer:(()=>{const p=peerBest('invDays',-1); return p&&p.v<b.invDays?{L:{inv:p.v-b.invDays},txt:`Matched ${SHORT[p.t]} at ${p.v.toFixed(0)} days`}:null;})()},
+   {label:'Payables Days',kind:'days',now:b.payDays,also:'cash',
+    step:{L:{pay:5},txt:`Payables days rise 5 (${b.payDays.toFixed(0)} → ${(b.payDays+5).toFixed(0)} days)`},
+    peer:(()=>{const p=peerBest('payDays',1); return p&&p.v>b.payDays?{L:{pay:p.v-b.payDays},txt:`Matched ${SHORT[p.t]} at ${p.v.toFixed(0)} days`}:null;})()},
+   {label:'Gross Margin',kind:'pct',now:b.gm,also:'gproi',
+    step:{L:{cogs:-1},txt:`Gross margin rises 1 pt through better sourcing (${fmt(b.gm,'pct')} → ${fmt(b.gm+0.01,'pct')})`},
+    peer:peerGM&&peerGM.v>b.gm?{L:{cogs:-(peerGM.v-b.gm)*100},txt:`Matched ${SHORT[peerGM.t]} at ${fmt(peerGM.v,'pct')}`}:null},
+   {label:'SG&A, % of Sales (Drives SCOM)',kind:'pct',now:sgaPct,also:'scom',
+    step:{L:{sga:-0.5},txt:`SG&A falls 0.5 pt of sales (${fmt(sgaPct,'pct')} → ${fmt(sgaPct-0.005,'pct')})`},
+    peer:(()=>{const p=peerBestPct('sga'); return p&&p.v<sgaPct?{L:{sga:(p.v-sgaPct)*100},txt:`Matched ${SHORT[p.t]} at ${fmt(p.v,'pct')}`}:null;})()},
+   {label:'PP&E Turnover',kind:'x',now:b.ppeT,also:'roaS',
+    step:{L:{ppe:-5},txt:`Same sales on 5% less PP&E (${fmt(b.ppeT,'x')} → ${fmt(b.ppeT/0.95,'x')})`},
+    peer:peerPPE&&peerPPE.v>b.ppeT?{L:{ppe:(b.ppeT/peerPPE.v-1)*100},txt:`Matched ${SHORT[peerPPE.t]} at ${fmt(peerPPE.v,'x')}`}:null},
+   {label:'Sales Growth',kind:'pct',now:b.growth,also:'roaS',
+    step:{L:{rev:2},txt:`Sales grow 2% more with cost ratios unchanged and the same PP&E`},peer:null,nopeer:'Not a peer comparison'}
+  ];
+  const chg=(a,bv,goodUp)=>{const dv=(bv-a)*100; const c=Math.abs(dv)<0.05?'flat':((dv>0)===goodUp?'up':'down'); return `<span class="chg ${c}">${dv>=0?'+':'−'}${Math.abs(dv).toFixed(1)} pts</span>`;};
+  const alsoTxt=(k,s)=>{
+    if(k==='cash'){const c=s.cash; return `${c>=0?'Frees':'Ties up'} ${fmt(Math.abs(c),'m')} of working capital; cash conversion cycle ${fmt(b.ccc,'days')} → ${fmt(s.ccc,'days')}`;}
+    if(k==='gproi') return `GPROI ${fmt(b.gproi,'x')} → ${fmt(s.gproi,'x')}; SCOM ${fmt(b.scom,'pct')} → ${fmt(s.scom,'pct')}`;
+    if(k==='scom') return `SCOM ${fmt(b.scom,'pct')} → ${fmt(s.scom,'pct')}; adds about ${fmt(s.sc-s.baseSc,'m')} of SC operating profit`;
+    if(k==='roaS') return `ROA using SCOM ${fmt(b.roaS,'pct')} → ${fmt(s.roaS,'pct')}`;
+    return '';};
+  let h=`<thead><tr><th>Key Ratio</th><th>Reported</th><th>If…</th><th>Then ROPA</th><th>Then Also</th></tr></thead><tbody>`;
+  defs.forEach(df=>{
+    [['Standard Step',df.step],['Match Best Peer',df.peer]].forEach(([tag,sc],i)=>{
+      const first=i===0;
+      h+=`<tr class="${first?'':'peer'}">`;
+      h+= first?`<td rowspan="2"><b>${esc(df.label)}</b></td><td class="num" rowspan="2">${fmt(df.now,df.kind)}</td>`:'';
+      if(!sc){h+=`<td><span class="tag">${tag}</span><br>${esc(df.nopeer||`${SHORT[co]} already leads the peer group`)}</td><td class="num muted">—</td><td class="muted">—</td></tr>`; return;}
+      const s=scenario(co,year,Object.assign(zero(),sc.L));
+      h+=`<td><span class="tag">${tag}</span><br>${esc(sc.txt)}</td><td class="num"><span class="arrow">${fmt(b.ropa,'pct')} → ${fmt(s.ropa,'pct')}</span><br>${chg(b.ropa,s.ropa,true)}</td><td>${esc(alsoTxt(df.also,s))}</td></tr>`;
+    });
+  });
+  document.getElementById('ifthen').innerHTML=h+'</tbody>';
+}
+
+/* ---------- inputs ---------- */
+function renderInputs(){
+  const cols=[]; ORDER.forEach(t=>['FY2025','FY2024'].forEach(fy=>cols.push([t,fy])));
+  let h=`<thead><tr><th>Line Item</th>${cols.map(([t,fy])=>`<th><span class="legend"><span><i class="dot" style="background:${COLOR[t]}"></i>${esc(t)} ${fy.slice(2)}</span></span></th>`).join('')}</tr>`;
+  h+=`<tr><td class="muted">Fiscal Year End</td>${cols.map(([t,fy])=>`<td class="num muted">${esc((byT(t).years[fy]||{}).period_end||'')}</td>`).join('')}</tr></thead><tbody>`;
+  FIELDS.forEach(([k,l])=>{h+=`<tr><td>${esc(l)}</td>`;
+    cols.forEach(([t,fy])=>{const v=(byT(t).years[fy]||{})[k]; const bv=(baseT(t).years[fy]||{})[k]; const ed=v!==bv;
+      h+=`<td><input id="in-${t}-${fy}-${k}" class="${ed?'edited':''}" type="number" step="any" inputmode="decimal" value="${v==null?'':v}" data-t="${t}" data-fy="${fy}" data-k="${k}" aria-label="${esc(SHORT[t]+' '+fy+' '+l)}"></td>`;});
+    h+='</tr>';});
+  h+=`<tr><td class="muted">FY2023 Revenue (for Growth)</td>${cols.map(([t,fy])=>fy==='FY2024'?`<td><input id="in-${t}-fy23" type="number" step="any" value="${byT(t).fy2023_revenue??''}" data-t="${t}" data-fy="FY2023" data-k="revenue" aria-label="${esc(SHORT[t])} FY2023 revenue"></td>`:'<td></td>').join('')}</tr>`;
+  document.getElementById('inputs').innerHTML=h+'</tbody>';
+}
+function saveEdits(){
+  const out={}; data.forEach(c=>{const bc=baseT(c.ticker); for(const fy in c.years){for(const k in c.years[fy]){if(c.years[fy][k]!==bc.years[fy][k]){((out[c.ticker]=out[c.ticker]||{})[fy]=(out[c.ticker][fy]||{}))[k]=c.years[fy][k];}}}});
+  try{localStorage.setItem(KEY,JSON.stringify(out));}catch(e){}
+}
+document.getElementById('inputs').addEventListener('change',e=>{
+  const el=e.target; if(!el.dataset||!el.dataset.k) return; const v=el.value===''?null:Number(el.value);
+  const c=byT(el.dataset.t);
+  if(el.dataset.fy==='FY2023'){c.fy2023_revenue=v;} else {c.years[el.dataset.fy][el.dataset.k]=v; el.classList.toggle('edited',v!==baseT(el.dataset.t).years[el.dataset.fy][el.dataset.k]);}
+  saveEdits(); setupSliders(); renderAll(false);
+  document.getElementById('status').textContent='Recalculated with your edit.';
+});
+document.getElementById('reset-d').addEventListener('click',()=>{data=JSON.parse(JSON.stringify(base)); try{localStorage.removeItem(KEY);}catch(e){} renderInputs(); setupSliders(); renderAll(false); document.getElementById('status').textContent='Reset to the 10-K figures.';});
+document.getElementById('copy').addEventListener('click',()=>{
+  const lines=[['Ratio',...ORDER.flatMap(t=>[t+' FY2025',t+' FY2024'])].join(',')];
+  ROWS.filter(r=>r.length>1).forEach(([k,l,,kind])=>{lines.push([`"${l}"`,...ORDER.flatMap(t=>['FY2025','FY2024'].map(fy=>{const v=(ratios(t,fy)||{})[k]; return v==null||!isFinite(v)?'':(kind==='pct'?(v*100).toFixed(2)+'%':v.toFixed(2));}))].join(','));});
+  const txt=lines.join('\n'); const box=document.getElementById('copybox'); const st=document.getElementById('status');
+  const fallback=()=>{box.hidden=false; box.value=txt; box.focus(); box.select(); st.textContent='Copy blocked here; the CSV is selected below. Press Ctrl+C or Cmd+C.';};
+  try{navigator.clipboard.writeText(txt).then(()=>{st.textContent='Copied. Paste into Excel.';},fallback);}catch(e){fallback();}
+});
+
+
+/* ---------- impact, chart, summary, workbook ---------- */
+let rk='ropa';
+const IMP={
+ invDays:['One day of inventory ties up',d=>d.cogs/365,''],
+ payDays:['One more day of payables frees',d=>d.cogs/365,''],
+ recDays:['One day of receivables ties up',d=>(d.receivables==null?null:d.revenue/365),''],
+ ccc:['One day off the cycle frees about',d=>d.cogs/365,''],
+ gm:['One point of gross margin is worth',d=>d.revenue*0.01,''],
+ scom:['One point of SCOM is worth',d=>d.revenue*0.01,''],
+ gproi:['Each 0.1× of GPROI equals',d=>d.inventory*0.1,' of gross profit'],
+ ropa:['One point of ROPA takes',d=>(d.ppe_net+d.inventory)*0.01,' more SC profit'],
+ ropaL:['One point takes',d=>(d.ppe_net+d.inventory+(d.rou_assets||0))*0.01,' more SC profit'],
+ growth:['One more point of growth adds',d=>d.revenue*0.01*(d.revenue-d.cogs-d.sga)/d.revenue,' of SC profit'],
+ spe:['$10K more sales per employee adds',d=>d.employees_thousands*10,' of sales'],
+ ppeT:['Adding 0.1× of PP&E turnover frees',d=>d.ppe_net-d.revenue/(d.revenue/d.ppe_net+0.1),' of PP&E']
+};
+function impactLine(k){const m=IMP[k]; if(!m) return '';
+  const parts=ORDER.map(t=>{const d=byT(t).years[year]; const v=d?m[1](d):null; return v==null||!isFinite(v)?null:`${t} ${fmt(v,'m')}`;}).filter(Boolean);
+  return esc(m[0])+' '+esc(parts.join(' · '))+esc(m[2]);}
+function rowDef(k){return ROWS.find(r=>r.length>1&&r[0]===k);}
+function renderRChart(){
+  const r=rowDef(rk); const [k,l,def,kind,dir,why]=r;
+  document.getElementById('rc-h').textContent=`${l} by Company`;
+  document.getElementById('rc-def').textContent=`${def}. ${dir===0?'No better direction; read it in context.':(dir>0?'Higher is better.':'Lower is better.')}`;
+  document.getElementById('rc-why').textContent=`Why It Matters: ${why}`;
+  document.getElementById('rsel').value=k;
+  const V=ORDER.map(t=>({t,a:(ratios(t,'FY2024')||{})[k],b:(ratios(t,'FY2025')||{})[k]}));
+  const all=V.flatMap(v=>[v.a,v.b]).filter(v=>v!=null&&isFinite(v));
+  const W=720,H=320,x0=64,x1=700,yT=40,yB=262;
+  let hi=Math.max(0,...all), lo=Math.min(0,...all); if(hi===lo) hi=lo+1; const pad=(hi-lo)*0.14; hi+=pad; if(lo<0) lo-=pad;
+  const Y=v=>yB-(v-lo)/(hi-lo)*(yB-yT);
+  let g='';
+  for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4, y=Y(v); g+=`<line x1="${x0}" x2="${x1}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${x0-8}" y="${y+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">${fmt(v,kind,kind==='pct'?0:(kind==='x'?1:0))}</text>`;}
+  g+=`<line x1="${x0}" x2="${x1}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--line-strong)"/>`;
+  const slot=(x1-x0)/ORDER.length, bw=Math.min(46,slot*0.3);
+  V.forEach((v,i)=>{const cx=x0+slot*(i+0.5);
+    [[v.a,-1,0.35,'FY24'],[v.b,1,1,'FY25']].forEach(([val,side,op,lab])=>{ if(val==null||!isFinite(val)) return;
+      const x=cx+(side<0?-bw-3:3), y=Math.min(Y(val),Y(0)), h=Math.max(1,Math.abs(Y(val)-Y(0)));
+      g+=`<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="3" fill="${COLOR[v.t]}" fill-opacity="${op}"/>`;
+      g+=`<text x="${x+bw/2}" y="${val>=0?y-6:y+h+13}" text-anchor="middle" font-size="11.5" font-family="var(--mono)" fill="${side>0?'var(--fg)':'var(--muted)'}" font-weight="${side>0?600:400}">${fmt(val,kind)}</text>`;});
+    g+=`<text x="${cx}" y="${yB+22}" text-anchor="middle" font-size="13" font-weight="600" fill="var(--fg)">${esc(SHORT[v.t])}</text>`;
+    g+=`<text x="${cx}" y="${yB+38}" text-anchor="middle" font-size="11" fill="var(--muted)">FY24 · FY25</text>`;});
+  g+=`<rect x="${x0}" y="10" width="12" height="12" rx="2" fill="var(--muted)" fill-opacity="0.35"/><text x="${x0+18}" y="20" font-size="12" fill="var(--muted)">FY2024 (lighter)</text><rect x="${x0+130}" y="10" width="12" height="12" rx="2" fill="var(--muted)"/><text x="${x0+148}" y="20" font-size="12" fill="var(--muted)">FY2025</text>`;
+  const svg=document.getElementById('rchart'); svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.innerHTML=g;
+}
+function renderReqs(){
+  const rows=[
+   ['One public company plus 1–2 competitors','Home Depot (focal) against Lowe\'s, Floor &amp; Decor and Tractor Supply.','warn','Confirm','Three competitors; confirm with Prof. Swink (tracker task 2).'],
+   ['Ratios for the two most recent years','FY2025 and FY2024 for all four; fiscal year-ends listed in the <a href="#workbook">Workbook View</a>.','ok','Covered',''],
+   ['Spreadsheet similar to the example','<a href="#workbook">Workbook View</a> follows the example\'s rows and order; <a href="#ratios">Ratios</a> adds goodwill and lease adjustments.','ok','Covered','Graded file is still the team Excel workbook.'],
+   ['10-Ks, analyst reports and company disclosures','10-Ks and Q4 earnings releases cited in <a href="#sources">Sources &amp; Inputs</a>.','prog','In Progress','Analyst reports and 2025–26 news: Workstream 4.'],
+   ['Comments explaining strategy and structure','Every ratio carries a Why It Matters and Impact label in <a href="#ratios">Ratios</a>.','prog','In Progress','Company-specific cell comments: Workstream 3.'],
+   ['Separate tab summarizing supply chain observations with data indicators','Seven draft findings below, each tied to its ratios.','prog','In Progress','Team wording due Nov 5 (Workstream 4).'],
+   ['Submit all source materials','Filings linked in <a href="#sources">Sources &amp; Inputs</a>.','prog','In Progress','Source zip with Julie\'s final package, Nov 6.'],
+   ['AI may help; conclusions are the team\'s own','AI use noted in the footer and README; findings marked as drafts.','ok','Covered','Cite AI in the submission.']];
+  let h='<thead><tr><th>Requirement</th><th>How It Is Covered</th><th>Status</th><th>Next Step</th></tr></thead><tbody>';
+  rows.forEach(([a,b,c,d,e])=>{h+=`<tr><td>${a}</td><td>${b}</td><td><span class="pill ${c}">${d}</span></td><td class="muted">${e||'—'}</td></tr>`;});
+  document.getElementById('reqs').innerHTML=h+'</tbody>';
+}
+function renderInsights(){
+  const A=t=>ratios(t,'FY2025')||{}, B=t=>ratios(t,'FY2024')||{};
+  const H=A('HD'),H0=B('HD'),L=A('LOW'),L0=B('LOW'),F=A('FND'),F0=B('FND'),T=A('TSCO');
+  const p=v=>fmt(v,'pct'), d=v=>fmt(v,'days'), x=v=>fmt(v,'x'), pts=v=>(Math.abs(v)*100).toFixed(1)+' pts';
+  const sgaP=(t,fy)=>{const y=byT(t).years[fy]; return y.sga/y.revenue;};
+  const gmCh=ORDER.map(t=>A(t).gm-B(t).gm), sgCh=ORDER.map(t=>sgaP(t,'FY2025')-sgaP(t,'FY2024'));
+  const allUp=sgCh.every(v=>v>0);
+  const I=[
+   {t:"Lowe's Return Drop Is Mostly Acquisition Accounting",b:`ROA using SCOM fell from ${p(L0.roaS)} to ${p(L.roaS)}, but excluding goodwill it moved only from ${p(L0.roaSxg)} to ${p(L.roaSxg)}, and ROPA held at ${p(L.ropa)}. Goodwill and intangibles went from ${p(L0.gwA)} to ${p(L.gwA)} of assets after the FBM and ADG deals, and receivable days rose to ${d(L.recDays)} as pro customers buy on credit.`,c:[['ROA Using SCOM',p(L.roaS)],['Excl. Goodwill',p(L.roaSxg)],['ROPA',p(L.ropa)]],g:'Strategic Profit Model · Integration',k:'roaSxg'},
+   {t:"Tractor Supply's ROPA Rests on Leasing",b:`Reported ROPA is ${p(T.ropa)}. Counting leased stores it falls to ${p(T.ropaL)}, because ${p(T.leaseShare)} of its physical network is leased (it leases about 97% of its stores). Home Depot falls only ${pts(H.ropa-H.ropaL)} on the same adjustment.`,c:[['ROPA',p(T.ropa)],['Incl. Leases',p(T.ropaL)],['Leased Share',p(T.leaseShare)]],g:'Asset Structure',k:'ropaL'},
+   {t:'Same Gross Margin, Very Different Supply Chains',b:`Home Depot (${p(H.gm)}) and Lowe's (${p(L.gm)}) earn almost the same gross margin, but Home Depot holds inventory ${Math.round(L.invDays-H.invDays)} fewer days (${d(H.invDays)} vs. ${d(L.invDays)}) and turns PP&E faster (${x(H.ppeT)} vs. ${x(L.ppeT)}), so ROPA is ${p(H.ropa)} vs. ${p(L.ropa)}. Lowe's pays suppliers ${Math.round(L.payDays-H.payDays)} days slower, which keeps its cash cycle close.`,c:[['Inventory Days',`${Math.round(H.invDays)} vs ${Math.round(L.invDays)}`],['ROPA',`${p(H.ropa)} vs ${p(L.ropa)}`]],g:'Efficiency Lever · Supplier Financing',k:'invDays'},
+   {t:'Highest Margin, Lowest Return',b:`Floor & Decor's ${p(F.gm)} gross margin leads the group, but SG&A takes ${p(sgaP('FND','FY2025'))} of sales, leaving ${p(F.scom)} SCOM and ${p(F.ropa)} ROPA. It carries ${d(F.invDays)} of inventory for in-stock selection, yet its GPROI (${x(F.gproi)}) still beats Lowe's (${x(L.gproi)}).`,c:[['Gross Margin',p(F.gm)],['SCOM',p(F.scom)],['GPROI',x(F.gproi)]],g:'Mismatch Costs',k:'gproi'},
+   {t:"Home Depot's Cash Cycle Lengthened During the Pro Buildout",b:`Inventory days rose from ${d(H0.invDays)} to ${d(H.invDays)} and payables days fell from ${d(H0.payDays)} to ${d(H.payDays)}, stretching the cash conversion cycle from ${d(H0.ccc)} to ${d(H.ccc)}. GPROI slipped from ${x(H0.gproi)} to ${x(H.gproi)}. FY2024 had 53 weeks, which flatters the base year.`,c:[['Cash Cycle',`${Math.round(H0.ccc)} → ${Math.round(H.ccc)} d`],['GPROI',`${x(H0.gproi)} → ${x(H.gproi)}`]],g:'Service vs. Cost',k:'ccc'},
+   {t:'The Squeeze Came from Operating Costs, Not Product Costs',b:`Gross margin moved no more than ${pts(Math.max(...gmCh.map(Math.abs)))} at any company, while SG&A ${allUp?'rose':'changed'} ${(Math.min(...sgCh)*100).toFixed(1)}–${(Math.max(...sgCh)*100).toFixed(1)} pts of sales${allUp?' at all four':''}. Check the 10-Ks and analyst reports for causes before naming tariffs or wages.`,c:[['Gross Margin Change',`≤ ${pts(Math.max(...gmCh.map(Math.abs)))}`],['SG&A Change',`+${(Math.min(...sgCh)*100).toFixed(1)} to +${(Math.max(...sgCh)*100).toFixed(1)} pts`]],g:'Cost Structure',k:'scom'},
+   {t:"Floor & Decor's Suppliers Are Financing Less",b:`Payables days fell from ${d(F0.payDays)} to ${d(F.payDays)}, lengthening the cash cycle from ${d(F0.ccc)} to ${d(F.ccc)} even though inventory days improved (${d(F0.invDays)} to ${d(F.invDays)}). Worth checking the 10-K for a change in supplier terms.`,c:[['Payables Days',`${Math.round(F0.payDays)} → ${Math.round(F.payDays)}`],['Cash Cycle',`${Math.round(F0.ccc)} → ${Math.round(F.ccc)} d`]],g:'Supplier Relationships',k:'payDays'}];
+  document.getElementById('insights').innerHTML=I.map((i,n)=>`<article class="ins"><span class="n">${String(n+1).padStart(2,'0')}</span><h3>${esc(i.t)}</h3><p>${esc(i.b)}</p><div class="chips">${i.c.map(([a,b])=>`<span class="chip"><span>${esc(a)}</span>${esc(b)}</span>`).join('')}</div><div class="foot"><span class="muted">${esc(i.g)}</span><a href="#ratios" data-rk="${i.k}">See in Ratios →</a></div></article>`).join('');
+}
+const WB=[
+ ['Cash On Hand','cash'],['Receivables','receivables'],['Inventory','inventory'],['Pre-Paid Expenses',null],['Other Current Assets','=oca'],['Total Current Assets','total_current_assets'],
+ ['Property, Plant, and Equipment','ppe_net'],['Goodwill And Intangible Assets','goodwill_intangibles'],['Other Long-Term Assets',null],['Long-Term Investments',null],['Total Long-Term Assets','=tlta'],['Total Assets','total_assets'],
+ ['Total Current Liabilities','total_current_liabilities'],['Long Term Debt',null],['Other Non-Current Liabilities',null],['Accounts Payable','accounts_payable'],['Total Long Term Liabilities',null],['Total Liabilities',null],
+ ['Common Stock Net',null],['Retained Earnings (Accumulated Deficit)',null],['Comprehensive Income',null],['Other Share Holders Equity',null],['Total Liabilities And Share Holders Equity','=tlse'],
+ ['Revenue','revenue'],['Cost of Goods Sold','cogs'],['Gross Profit','gross_profit'],['Research and Development Expenses',null],['SG&A Expenses','sga'],['Other Operating Income Or Expenses',null],['Operating Expenses',null],['Operating Income','operating_income'],
+ ['Total Non-Operating Income/Expense',null],['Pre-Tax Income',null],['Income Taxes',null],['Income After Taxes',null],['Other Income',null],['Income From Continuous Operations',null],['Income From Discontinued Operations',null],['Net Income','net_income'],
+ ['EBITDA','=ebitda'],['EBIT','=ebit'],['Basic Shares Outstanding',null],['Shares Outstanding',null],['Basic EPS',null],['EPS - Earnings Per Share',null],['Employees (1000)','employees_thousands']];
+const WBR=[['Working Capital Productivity',[['Working Capital/Sales','wcs'],['Cash/Assets','cashA'],['Inventory Days','invDays'],['Receivables Days','recDays'],['Payables Days','payDays'],['Cash Conversion Cycle','ccc']]],
+ ['Non-Current Assets Productivity',[['Asset Turnover (ATO)','ato'],['Plant Property Equip (PPE) Turnover','ppeT'],['PPE/Assets','ppeA']]],
+ ['Labor Productivity',[['Sales per Employee','spe']]],
+ ['Growth and Profitability',[['Sales Growth','growth'],['Gross Margin','gm'],['Gross Profit Return on Inventory (GPROI)','gproi'],['Operating Margin','opm'],['ROA','roa'],['SC Operating Margin (SCOM)','scom'],['ROA (Using SCOM)','roaS'],['ROIC (Using SCOM)','roicS'],['ROPA (Using SCOM)','ropa']]],
+ ['Liquidity',[['Current Ratio','cur'],['Quick Ratio','quick']]],
+ ['Added: Goodwill and Lease Adjustments',[['ROA (Using SCOM), Excl. Goodwill','roaSxg'],['ROPA Incl. Leased Assets','ropaL'],['Goodwill & Intangibles/Assets','gwA'],['Leased Share of Physical Assets','leaseShare']]]];
+function renderWorkbook(){
+  const cols=[]; ORDER.forEach(t=>['FY2025','FY2024'].forEach(fy=>cols.push([t,fy])));
+  const num=v=>v==null||!isFinite(v)?'—':(Math.abs(v)>=100?Math.round(v).toLocaleString('en-US'):(+v.toFixed(1)).toLocaleString('en-US'));
+  const der=(d,k)=>{ if(k==='oca') return d.total_current_assets-d.cash-(d.receivables||0)-d.inventory;
+    if(k==='tlta') return d.total_assets-d.total_current_assets; if(k==='tlse') return d.total_assets;
+    if(k==='ebitda') return d.operating_income+(d.depreciation_amortization||0); if(k==='ebit') return d.operating_income; return null;};
+  let h='<thead><tr class="co"><th style="background:var(--accent);color:var(--surface)">Company Name</th>'+cols.map(([t])=>`<th style="background:${COLOR[t]}">${esc(byT(t).company)}</th>`).join('')+'</tr></thead><tbody>';
+  h+='<tr><td>Ticker Symbol</td>'+cols.map(([t])=>`<td class="num">${t}</td>`).join('')+'</tr>';
+  h+='<tr><td>Fiscal Year</td>'+cols.map(([,fy])=>`<td class="num">${fy.slice(2)}</td>`).join('')+'</tr>';
+  h+='<tr><td>Data Date</td>'+cols.map(([t,fy])=>`<td class="num">${esc(byT(t).years[fy].period_end)}</td>`).join('')+'</tr>';
+  let miss=0,total=0;
+  WB.forEach(([lab,k])=>{h+=`<tr><td>${esc(lab)}</td>`; total++; if(k===null) miss++;
+    cols.forEach(([t,fy])=>{const d=byT(t).years[fy];
+      if(k===null){h+=`<td class="num miss" title="Not pulled yet; fill from the 10-K">—</td>`;}
+      else if(k.startsWith('=')){h+=`<td class="num der" title="Derived from other lines">${num(der(d,k.slice(1)))}</td>`;}
+      else{const v=d[k]; h+=`<td class="num${v==null?' miss':''}">${num(v)}</td>`;}});
+    h+='</tr>';});
+  WBR.forEach(([grp,items])=>{h+=`<tr class="sub"><td colspan="${cols.length+1}">${esc(grp)}</td></tr>`;
+    items.forEach(([lab,k])=>{const kind=(rowDef(k)||[])[3]; h+=`<tr><td>${esc(lab)}</td>`+cols.map(([t,fy])=>`<td class="num">${fmt((ratios(t,fy)||{})[k],kind)}</td>`).join('')+'</tr>';});});
+  document.getElementById('wb').innerHTML=h+'</tbody>';
+  document.getElementById('wb-gap').textContent=`${miss} of ${total} statement lines are not pulled yet; the ratios need none of them.`;
+}
+const VIEWS=['summary','ratios','whatif','workbook','sources'];
+function show(v){ if(!VIEWS.includes(v)) v='summary';
+  VIEWS.forEach(x=>{document.getElementById('v-'+x).hidden=x!==v;});
+  document.querySelectorAll('nav.tabs a').forEach(a=>{ if(a.dataset.view===v) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');});
+  if(v==='ratios') renderRChart();
+}
+
+/* ---------- wiring ---------- */
+function renderAll(full){ renderSPM(); renderTable(); renderRChart(); renderIfThen(); renderBench(); renderInsights(); renderWorkbook(); document.getElementById('wi-yr').textContent=`Showing ${year}; switch years at the top of the page.`; }
+document.getElementById('y25').addEventListener('click',()=>{year='FY2025'; syncYear();});
+document.getElementById('y24').addEventListener('click',()=>{year='FY2024'; syncYear();});
+function syncYear(){document.getElementById('y25').setAttribute('aria-pressed',year==='FY2025');document.getElementById('y24').setAttribute('aria-pressed',year==='FY2024');setupSliders();renderAll();}
+const sel=document.getElementById('co'); sel.innerHTML=ORDER.map(t=>`<option value="${t}">${esc(SHORT[t])}</option>`).join('');
+function setCo(v){co=v; sel.value=v; Object.keys(lever).forEach(k=>lever[k]=0); setupSliders(); renderIfThen(); renderBench();}
+sel.addEventListener('change',()=>setCo(sel.value));
+const rsel=document.getElementById('rsel'); rsel.innerHTML=ROWS.map(r=>r.length===1?`</optgroup><optgroup label="${esc(r[0])}">`:`<option value="${r[0]}">${esc(r[1])}</option>`).join('').replace(/^<\/optgroup>/,'')+'</optgroup>';
+rsel.addEventListener('change',()=>{rk=rsel.value; renderRChart(); renderTable();});
+document.getElementById('ratios').addEventListener('click',e=>{const b=e.target.closest('button[data-k]'); if(!b) return; rk=b.dataset.k; renderRChart(); renderTable(); document.getElementById('rc-h').scrollIntoView({behavior:'smooth',block:'start'});});
+document.addEventListener('click',e=>{const a=e.target.closest('a[data-rk]'); if(a){rk=a.dataset.rk; renderTable();}});
+window.addEventListener('hashchange',()=>{show(location.hash.slice(1)); window.scrollTo(0,0);});
+[['s-inv','inv'],['s-pay','pay'],['s-cogs','cogs'],['s-sga','sga'],['s-ppe','ppe'],['s-rev','rev']].forEach(([id,k])=>document.getElementById(id).addEventListener('input',e=>{lever[k]=Number(e.target.value); renderBench();}));
+document.getElementById('reset-s').addEventListener('click',()=>{Object.keys(lever).forEach(k=>lever[k]=0); renderBench();});
+document.getElementById('presets').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return; lever[b.dataset.p]=Number(b.dataset.v); renderBench();});
+
+function renderSources(){
+  const seen=new Set(); let s='';
+  data.forEach(c=>(c.sources||[]).forEach(x=>{if(!x.url||seen.has(x.url))return; seen.add(x.url); s+=`<li><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title||x.url)}</a> <span class="muted">(${esc(c.ticker)})</span></li>`;}));
+  document.getElementById('sources').innerHTML=s;
+  document.getElementById('notes').innerHTML=data.map(c=>`<div><h3><i class="dot" style="background:${COLOR[c.ticker]}"></i>${esc(SHORT[c.ticker])}</h3><ul>${(c.notes||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`).join('');
+}
+legend(); renderReqs(); renderInputs(); renderSources(); setupSliders(); renderAll(true); show(location.hash.slice(1));
+</script>
+
+</body>
+</html>
