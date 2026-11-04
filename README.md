@@ -6,7 +6,7 @@ Built by Team Aster for INSC 75663 Supply Chain and Operational Strategy, Execut
 
 ## Views
 
-- **Summary** (`#summary`): seven key findings and the Strategic Profit Model.
+- **Summary** (`#summary`): executive summary, seven key findings and the Strategic Profit Model.
 - **Ratios** (`#ratios`): a chart for any ratio plus the full ratio sheet with Why It Matters and Impact labels.
 - **What If** (`#whatif`): If/Then analysis, sensitivity sliders and a tornado chart.
 - **Workbook View** (`#workbook`): all four companies in the assignment's spreadsheet layout.
@@ -41,7 +41,7 @@ Open `index.html` in any browser, or visit the GitHub Pages site for this reposi
 
 ## Method
 
-- SC Operating Margin (SCOM) = (sales − COGS − SG&A) ÷ sales, with SG&A as reported.
+- SC Operating Margin (SCOM) = (sales − COGS − SG&A) ÷ sales, with SG&A excluding depreciation and amortization. Floor & Decor reports one combined line, so its depreciation was moved out to match the other three companies.
 - PP&E excludes operating lease right-of-use assets unless a ratio says otherwise.
 - Home Depot's fiscal 2024 and Lowe's fiscal 2023 had 53 weeks, which affects sales growth.
 - Floor & Decor and Tractor Supply fiscal years end in late December, about five weeks before Home Depot and Lowe's.
